@@ -154,7 +154,7 @@ def Phi(ac = 0.5):
     
     
     int_phi = lambda phi: np.sqrt(1.0 - (1.0 - (ac)**2.0)*(np.sin(phi))**2.0)
-    phi = quad(int_phi,0,np.pi/2)
+    phi = quad(int_phi,0,np.pi/2)[0]
     return phi       
         
     
