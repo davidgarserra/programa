@@ -7,6 +7,7 @@ Created on Thu Nov 29 13:20:11 2018
 
 import math
 import numpy as np
+from scipy.integrate import quad
 
 def constantes_material(MAT = 0):
     """Devuelve las propiedades del material.
@@ -149,17 +150,14 @@ def Phi(ac = 0.5):
 
     OUTPUT: Phi = factor de la grieta eliptica"""
     
-    #Calculo del factor para grietas elípticas
-    Phi  = 0.0
-    N    = 100.0
-    dphi = math.pi/2.0/N
-    phi  = dphi/2.0
+    #Calculo del factor para grietas elíptica
     
-    while(phi <= math.pi/2.0):
-        Phi += math.sqrt(1.0 - (1.0 - (ac)**2.0)*(math.sin(phi))**2.0)*dphi
-        phi += dphi
+    
+    int_phi = lambda phi: np.sqrt(1.0 - (1.0 - (ac)**2.0)*(np.sin(phi))**2.0)
+    phi = quad(int_phi,0,np.pi/2)
+    return phi       
         
-    return Phi
+    
     
 ###############################################################################
 ###############################################################################
