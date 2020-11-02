@@ -117,7 +117,12 @@ def curvas_iniciacion(par, da, W, MAT):
     #y los tamaños de grieta para crear las curvas de iniciación
     cwd      = os.getcwd()
     ruta     = cwd + '/curvas_inic'
-    ruta_fig = cwd + '/grafs/' + par
+    ruta_fig = cwd + '/grafs'
+    if(os.path.isdir(ruta_fig)):
+        pass
+    else:
+        os.mkdir(ruta_fig)
+
     archivo  = open('{}/MAT{}_{}.dat'.format(ruta, MAT, par), 'w')
         
     archivo.write('0      ')
@@ -152,8 +157,8 @@ def curvas_iniciacion(par, da, W, MAT):
     m_N_i = [[], []]       #Matriz para guardar ciclos y tensiones para
                            #facilitar la generacion de las graficas 
     v_a   = []             #Vector de tamaños de grietas
-    n_a   = 120           #Número de curvas de iniciacion por material
-    a_min = 5e-6           #Tamaño más pequeño grieta
+    n_a   = 10          #Número de curvas de iniciacion por material
+    a_min = 5e-5           #Tamaño más pequeño grieta
     ex    = 1.45		   #Variable para controlar como crece la diferencia
     					   #entre longitudes de grieta
     
@@ -193,23 +198,25 @@ def curvas_iniciacion(par, da, W, MAT):
             v_sigma2[j].append(m_N_i[1][j+i*n_a])       
     
     #Pintamos las curvas de iniciación
-    plt.close('MAT_' + str(MAT) + '|crit_' + par)
-    plt.figure('MAT_' + str(MAT) + '|crit_' + par)
+ 
+    plt.figure(figsize=(6,5),dpi=100)
+    
     for i in range(n_a):
         plt.plot(v_N_i[i], v_sigma2[i])
     
     plt.xlabel('Ciclos de iniciacion')
     plt.xscale('log')
+    plt.grid()
     plt.show()
     
     #Guardamos la figura y la cerramos
-    plt.savefig(ruta_fig + '/curvas_inic.png')
-    plt.close('MAT_' + str(MAT) + '|crit_' + par)
+    plt.savefig(ruta_fig + f'/curvas_inic_{par}.png')
+   
     
 ###############################################################################
 ###############################################################################    
 
 if __name__ == "__main__":
     
-    curvas=curvas_iniciacion(par = 'FS', da=0.2e-5, W = 10e-3, MAT = 0)
+    curvas_iniciacion(par = 'FS', da=1e-5, W = 10e-3, MAT = 0)
         
