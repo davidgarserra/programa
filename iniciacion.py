@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import fsolve
 from propagacion import fase_propagacion
 from propagacion import constantes_material
+import numpy as np
 
 def ciclos_totales(param, crit, MAT):
     """Devuelve los ciclos totales en funcion del criterio usado, utilizando 
@@ -134,7 +135,7 @@ def curvas_iniciacion(par, da, W, MAT):
     sigma_max   = 500.0    #(MPa) tension maxima
     sigma_min   = 50.0     #(MPa) tension minima
         
-    delta_sigma = (sigma_max - sigma_min)/n_sigma #Paso de tensiones
+    delta_sigma = 10.0      #Paso de tensiones
 
     #Cargamos propiedades del material
     sigma_y = constantes_material(MAT)[7]
@@ -144,73 +145,52 @@ def curvas_iniciacion(par, da, W, MAT):
     G       = constantes_material(MAT)[12]
 
     #Generamos el vector de Fatemi-Socie o Smith-Watson-Topper
-    for i in range(n_sigma+1):
-        sigma_i = sigma_min+i*delta_sigma
-        def_i   = sigma_i/E
-        gamma_i = sigma_i/2.0/G
-        v_sigma.append(sigma_i)
-        if par == 'FS':
-            v_param.append(gamma_i*(1.0+k*sigma_i/2.0/sigma_y))
-        elif par == 'SWT':
-            v_param.append(sigma_i*def_i)        
-    
-    m_N_i = [[], []]       #Matriz para guardar ciclos y tensiones para
-                           #facilitar la generacion de las graficas 
-    v_a   = []             #Vector de tamaños de grietas
+         
+    v_sigma = np.arange(sigma_min,sigma_max,delta_sigma)
+    n_sigma = len(v_sigma)
+    v_def = v_sigma/E 
+    v_gamma = v_sigma/2/G 
+    v_param = v_gamma*(1.0+k*v_sigma/2.0/sigma_y) if par =='FS' else v_sigma*v_def
+                                    
     n_a   = 10          #Número de curvas de iniciacion por material
     a_min = 5e-5           #Tamaño más pequeño grieta
     ex    = 1.45		   #Variable para controlar como crece la diferencia
     					   #entre longitudes de grieta
+       
+    v_a = [a_min*(i+1.0)**ex for i in range(n_a)] #Vector de tamaños de grietas
+    for a in v_a:
+        archivo.write('{:.2e}  '.format(a))
     
-    for i in range(n_a):
-        v_a.append(a_min*(i+1.0)**ex)
-        archivo.write('{:.2e}  '.format(v_a[-1]))
-        
-    #Creamos las curvas de iniciación en el archivo
+    
+    N_i = np.zeros((n_sigma,n_a)) #inicializamos la matriz de ciclos de iniciación
     for i in range(len(v_param)):
         archivo.write('\n{:+.2e}'.format(v_param[i]))
-            
-        for j in v_a:
-            N_i   = fase_iniciacion(v_param[i], v_sigma[i], par, j, da, W, MAT)
-            m_N_i[0].append(N_i)
-            m_N_i[1].append(v_sigma[i])
- 
-            archivo.write(' {:+.6e}'.format(N_i))
+        for j,a in enumerate(v_a):
+            N_i[i,j]  = fase_iniciacion(v_param[i], v_sigma[i], par, a, da, W, MAT)
+
+
             
         #Pintamos en la consola el porcentaje realizado
         print('\r{:.2%} completado'.format((i+1.0)/len(v_param)), end = '')
     
     #Cerramos el archivo
-    archivo.close()
-    
-    v_N_i = []
-    v_sigma2 = []
-
-    #Utilizando la matriz auxiliar m_N_i, creamos los vectores de ciclos de
-    #iniciacion y tensiones en el formato adecuado para dibujar las curvas.
-    for i in range(n_a):
-        v_N_i.append([])
-        v_sigma2.append([])
-    
-    for i in range(n_sigma):
-        for j in range(n_a):
-            v_N_i[j].append(m_N_i[0][j+i*n_a])
-            v_sigma2[j].append(m_N_i[1][j+i*n_a])       
+    archivo.close()     
     
     #Pintamos las curvas de iniciación
- 
-    plt.figure(figsize=(6,5),dpi=100)
     
+    plt.figure()
     for i in range(n_a):
-        plt.plot(v_N_i[i], v_sigma2[i])
-    
-    plt.xlabel('Ciclos de iniciacion')
-    plt.xscale('log')
+        plt.plot(N_i[:,i],v_sigma)
     plt.grid()
+    plt.title(f"Curvas de iniciación para el parámetro {par}")
+    plt.xscale("log")
+    plt.xlabel("Ciclos")
+    plt.ylabel("$\sigma (MPa)$")
+
+    # #Guardamos la figura y la cerramos
+    plt.savefig(ruta_fig+f'/curvas_inic_{par}.png')
     plt.show()
-    
-    #Guardamos la figura y la cerramos
-    plt.savefig(ruta_fig + f'/curvas_inic_{par}.png')
+    plt.close(1)
    
     
 ###############################################################################
