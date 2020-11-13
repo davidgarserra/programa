@@ -123,7 +123,7 @@ def K_I(sigma, a, ds, W):
             integral += integr_KI(s, sigma)*ds
             s        += ds       
         
-        K_I      = (2.0/math.pi)**0.5*integral
+        K_I      = (2.0/np.pi)**0.5*integral
 
     #Si sigma es de tipo list, el cálculo es para la fase de propagación
     else:
@@ -134,7 +134,7 @@ def K_I(sigma, a, ds, W):
             integral += integr_KI(s, (sigma[i]+sigma[i+1])/2.0)*ds
             s        += ds
             
-        K_I = (2.0/math.pi)**0.5*integral
+        K_I = (2.0/np.pi)**0.5*integral
     
     return K_I
         
@@ -229,9 +229,3 @@ def fase_propagacion(sigma, ind_a, a_i, da, W, MAT = 0):
         
     return N_p
     
-###############################################################################
-###############################################################################
-    
-if __name__ == "__main__":
-    
-    pass
