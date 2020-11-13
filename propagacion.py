@@ -130,9 +130,8 @@ def K_I(sigma, a, ds, W):
         integral = 0.0
         s        = ds/2.0
         
-        for i in sigma[:-1]:
-            j = sigma[sigma.index(i)+1]
-            integral += integr_KI(s, (i+j)/2.0)*ds
+        for i in len(sigma[:-1]):
+            integral += integr_KI(s, (sigma[i]+sigma[i+1])/2.0)*ds
             s        += ds
             
         K_I = (2.0/math.pi)**0.5*integral
@@ -149,19 +148,13 @@ def Phi(ac = 0.5):
     INPUT:  ac  = a/c | relacion entre los semiejes
 
     OUTPUT: Phi = factor de la grieta eliptica"""
-    
     #Calculo del factor para grietas elíptica
-    
-    
     int_phi = lambda phi: np.sqrt(1.0 - (1.0 - (ac)**2.0)*(np.sin(phi))**2.0)
     phi = quad(int_phi,0,np.pi/2)[0]
     return phi       
-        
-    
-    
+           
 ###############################################################################
 ###############################################################################
-
 def fase_propagacion(sigma, ind_a, a_i, da, W, MAT = 0):
     """Devuelve los ciclos de propagacion de la grieta.
     
@@ -199,14 +192,12 @@ def fase_propagacion(sigma, ind_a, a_i, da, W, MAT = 0):
                           - (K_th*(x**f/(x**f + a_0**f - l_0**f))**(0.5*f))**n))
         
         return ki, res            
-    
+    ac  = 0.5
+    N_p = 0.0
+    a   = a_i 
+    ki  = 0.0
     #Si sigma es de tipo float, el cálculo es para la fase de iniciación
     if type(sigma) is not list:
-        ac  = 0.5
-        N_p = 0.0
-        a   = a_i 
-        ki  = 0.0
-        
         while ki < K_IC:
             N_p += integr_prop(a, sigma, ac)[1]*da
             ki   = integr_prop(a, sigma, ac)[0]
@@ -218,12 +209,7 @@ def fase_propagacion(sigma, ind_a, a_i, da, W, MAT = 0):
     #vuelta del bucle aumenta en 1 el tamaño del vector de tensiones y la
     #longitud de grieta consecuentemente con el paso.    
     else:
-        ac  = 0.5
-        N_p = 0.0
-        i   = 0
-        a   = a_i 
-        ki  = 0.0
-        
+        i =0
         while ki < K_IC:
             #Invertimos los vectores de tensiones, ya que para el calculo de 
             #K_IC la integral se inicia al fondo de la grieta acabando en 
