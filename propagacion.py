@@ -148,13 +148,17 @@ def Phi(ac = 0.5):
     INPUT:  ac  = a/c | relacion entre los semiejes
 
     OUTPUT: Phi = factor de la grieta eliptica"""
+    
     #Calculo del factor para grietas elíptica
     int_phi = lambda phi: np.sqrt(1.0 - (1.0 - (ac)**2.0)*(np.sin(phi))**2.0)
     phi = quad(int_phi,0,np.pi/2)[0]
     return phi       
-           
+        
+    
+    
 ###############################################################################
 ###############################################################################
+
 def fase_propagacion(sigma, ind_a, a_i, da, W, MAT = 0):
     """Devuelve los ciclos de propagacion de la grieta.
     
@@ -192,11 +196,12 @@ def fase_propagacion(sigma, ind_a, a_i, da, W, MAT = 0):
                           - (K_th*(x**f/(x**f + a_0**f - l_0**f))**(0.5*f))**n))
         
         return ki, res            
+    
+    #Si sigma es de tipo float, el cálculo es para la fase de iniciación
     ac  = 0.5
     N_p = 0.0
     a   = a_i 
     ki  = 0.0
-    #Si sigma es de tipo float, el cálculo es para la fase de iniciación
     if type(sigma) is not list:
         while ki < K_IC:
             N_p += integr_prop(a, sigma, ac)[1]*da
