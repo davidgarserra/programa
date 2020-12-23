@@ -4,9 +4,16 @@
 """
 import  tkinter as tk
 
-win = tk.Tk()
+class programa(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.title("Cálculo de Fatiga")
 
-win.title("Cálculos de Fatiga")
+if __name__ =="__main__":
+    app = programa() 
+    app.mainloop()
 
-win.mainloop()
+
+
+
 
