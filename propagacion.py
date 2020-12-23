@@ -5,7 +5,7 @@ Created on Thu Nov 29 13:20:11 2018
 @author: Alejandro Quirós
 """
 
-import math
+
 import numpy as np
 from scipy.integrate import quad
 
@@ -78,7 +78,7 @@ def constantes_material(MAT = 0):
 #    G.append(E[MAT]/((1.0 + nu[MAT])))
         
     #Calculo del parametro de El Haddad y salida de las constantes
-    a_0.append(1/math.pi*(K_th[MAT]/(sigma_fl[MAT]))**2.0)
+    a_0.append(1/np.pi*(K_th[MAT]/(sigma_fl[MAT]))**2.0)
     
     mat_props = [C[MAT], n[MAT], f[MAT], l_0[MAT], K_th[MAT], a_0[MAT],
                  K_IC[MAT], sigma_y[MAT], sigma_f[MAT], E[MAT], nu[MAT],
@@ -130,8 +130,9 @@ def K_I(sigma, a, ds, W):
         integral = 0.0
         s        = ds/2.0
         
-        for i in len(sigma[:-1]):
-            integral += integr_KI(s, (sigma[i]+sigma[i+1])/2.0)*ds
+        for i in sigma[:-1]:
+            j = sigma[sigma.index(i)+1]
+            integral += integr_KI(s, (i+j)/2.0)*ds
             s        += ds
             
         K_I = (2.0/np.pi)**0.5*integral

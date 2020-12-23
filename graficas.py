@@ -376,7 +376,7 @@ if __name__ == "__main__":
     
     grafs_globales(vida_exp_sin, crit)
     error(crit, vida_exp_sin)
-    error(crit, vida_exp_sin, vida_exp_SP, vida_exp_elec)   
+    # error(crit, vida_exp_sin, vida_exp_SP, vida_exp_elec)   
     
     for exp in vida_exp_sin:    
         grafs_long_grieta(exp, crit)
