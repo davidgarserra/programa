@@ -34,23 +34,25 @@ class programa(tk.Tk):
         tabControl.pack(expand=1,fill= "both")
 
         #Label Frame de propiedades del material
-        props_lf = ttk.Labelframe(tabs[0],text = "Propiedades")
-             
-        props_lf.grid(column = 0,row =0,padx =20,pady=30)
-
-
-        
+        props_lf = ttk.Labelframe(tabs[0],text = "Propiedades") 
+        # props_lf.grid(column = 0,row =0,padx =20,pady=30)
+        props_lf.place(width=180,height=500)
         props = ["C","n","f","l_0","K_th","a_0","K_IC","sigma_y","sigma_f","E","nu","b","G"]
 
-        props_entries = [tk.Entry(props_lf,width = 8,justify = "right") for _ in props]
+        self.props_entries = [tk.Entry(props_lf,width = 8,justify = "right") for _ in props]
         props_labels = [ttk.Label(props_lf,text = p) for p in props]
-        props_entries[5].config(state=tk.DISABLED)
-        props_entries[-1].config(state=tk.DISABLED)
+        self.props_entries[5].config(state=tk.DISABLED)
+        self.props_entries[-1].config(state=tk.DISABLED)
         
         for i,_ in enumerate(props):
-            props_entries[i].grid(column = 0, row = i, padx = 5,pady = 5)
+            self.props_entries[i].grid(column = 0, row = i, padx = 5,pady = 5)
             props_labels[i].grid(column = 1, row = i, padx = 8,pady = 5,sticky= tk.W)
-        """C = coeficiente de la ley de crecimiento
+        #Botones de las propiedades
+        boton_borrar = ttk.Button(props_lf,text="Borrar",command = self.borrar_campos)
+        boton_borrar.grid(column = 0,row =len(props),padx =5, pady =8)
+        boton_guardar= ttk.Button(props_lf,text="Guardar",command = self.guardar_campos)
+        boton_guardar.grid(column = 1,row =len(props),padx =5, pady =8)
+        """C = coeficiente de la ley de crecimiento,
              n           = exponente de la ley de crecimiento
              f           = parametro en aproximacion al diagrama
              Kitagawa-Takahashi
@@ -74,6 +76,12 @@ class programa(tk.Tk):
         self.resum_lf =ttk.Labelframe(tabs[0],text = "Resumen")
         self.resum_lf.grid(column = 0,row =0,padx =20,pady=30)
 
+    def borrar_campos(self):
+        for prop in self.props_entries:
+            prop.delete(0,tk.END)
+
+    def guardar_campos(self):
+        pass
 
 
 
