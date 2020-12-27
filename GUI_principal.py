@@ -1,6 +1,6 @@
 """
 
-@author: David García 
+@author: David García Serrano
 """
 import  tkinter as tk
 from tkinter import ttk
@@ -13,17 +13,19 @@ class programa(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Cálculo de Fatiga")
-        self.geometry("800x600+10+10")
+        self.geometry("1000x600+10+10")
         
 
         #variables 
         self.props = ["C","n","f","l_0","K_th","sigma_fl","a_0","K_IC","sigma_y","sigma_f","E","nu","b","G"]
+        self.units = ["","","","m","MPa m^0.5","MPa","m","MPa m^0.5","MPa","MPa","MPa","","","MPa"]
         self.dict_prop = {}
         self.mat_values ={}
+        self.dict_units = dict(zip(self.props,self.units))
         for prop in self.props:
             self.mat_values[prop] = tk.StringVar()
         
-
+    
 
         #Menu
         menu = tk.Menu(self)
@@ -54,27 +56,27 @@ class programa(tk.Tk):
         # props_lf.place(width=180,height=500)
         self.props_entries = {}
         for prop in self.props:
-            self.props_entries[prop] = tk.Entry(props_lf,textvariable = self.mat_values[prop],width = 20,justify = "right") 
-        props_labels = [ttk.Label(props_lf,text = p,width=10) for p in self.props]
+            self.props_entries[prop] = tk.Entry(props_lf,textvariable = self.mat_values[prop],width = 20,justify = "right",font =("Arial",10)) 
+        props_labels = [ttk.Label(props_lf,text = f"{p}({self.dict_units[p]})",font =("Arial",10)) for p in self.props]
         self.props_entries["G"].config(state=tk.DISABLED)
         self.props_entries["a_0"].config(state=tk.DISABLED)
 
-        
+
         for i,prop in enumerate(self.props):
             self.props_entries[prop].grid(column = 1, row = i, padx = 5,pady = 5,sticky=tk.W)
             props_labels[i].grid(column = 0, row = i, padx = 8,pady = 5,sticky= tk.W)
         
         
         #Botones de las propiedades
-        boton_borrar = ttk.Button(props_lf,width = 10,text="Borrar todo",command = self.borrar_campos)
+        boton_borrar = ttk.Button(props_lf,width = 20,text="Borrar todo",command = self.borrar_campos)
         boton_borrar.grid(column = 0,row =len(self.props),padx =2, pady =5,sticky= tk.W)
         boton_guardar= ttk.Button(props_lf,text="Confirmar",width=20,command = self.guardar_campos)
         boton_guardar.grid(column = 1,row =len(self.props),padx =2, pady =5,sticky= tk.W)
         
         #combobox
         self.comb_val = ["Acero"]
-        self.combo = ttk.Combobox(props_lf,width = 10,value =self.comb_val,font =("Arial",12),foreground="green",background="black")
-        self.combo.current(0)
+        self.combo = ttk.Combobox(props_lf,width = 30,value =self.comb_val,font =("Arial",12,"bold"),foreground="green",background="black")
+        # self.combo.current(0)
         self.combo.bind("<<ComboboxSelected>>",self.combosel) 
         self.combo.grid(column = 0, row = len(self.props)+1,columnspan=2,padx = 5, pady = 8)
         
@@ -85,12 +87,12 @@ class programa(tk.Tk):
         #Label Frame del resumen 
         self.resum_lf =ttk.Labelframe(tabs[0],text = "Resumen")
         self.resum_lf.grid(column = 1,row =0,padx =20,pady=30,sticky=tk.NW)
-        self.intro_resumen = ttk.Label(self.resum_lf, text = "Datos que se van a utilizar para la realización de los cálculos:")
+        self.intro_resumen = ttk.Label(self.resum_lf, text = "Datos que se van a utilizar para la realización de los cálculos:",font = ("Arial",12))
         self.intro_resumen.grid(column = 0, row =0,padx = 20)
         self.resum_label ={}
 
         for i,prop in enumerate(self.props):
-            self.resum_label[prop] = ttk.Label(self.resum_lf,text = prop+": ") 
+            self.resum_label[prop] = ttk.Label(self.resum_lf,text = prop+": ",font =("Arial",12,"bold")) 
             self.resum_label[prop].grid(column = 0,row =i+1, padx = 5,pady = 5,sticky=tk.W)
 
     
@@ -119,6 +121,7 @@ class programa(tk.Tk):
         self.dict_prop = {}
         for prop in self.props:
             self.resum_label[prop].config(text =prop+": ")
+            self.props_entries[prop].config(fg="black")
         
 
     def guardar_campos(self):
@@ -144,7 +147,7 @@ class programa(tk.Tk):
         if len(self.dict_prop)==len(self.props):
             for prop in self.props:
                 self.props_entries[prop].config(fg= "green")
-                self.resum_label[prop].config(text = "{}:\t{:>.5}".format(prop,self.dict_prop[prop]))
+                self.resum_label[prop].config(text = "{}:\t{:.3e}\t{}".format(prop,self.dict_prop[prop],self.dict_units[prop]))
         print(self.dict_prop)
         
     def mostrar_info(self):
