@@ -41,16 +41,18 @@ class programa(tk.Tk):
         self.config(menu=menu)
 
         #Pestañas 
-        pestanas = ["Material","Datos","Iniciación","Comparación"]
-        tabControl = ttk.Notebook(self)
-        tabs =[ttk.Frame(tabControl) for _ in pestanas]
-        for i,tab in enumerate(pestanas):
-            tabControl.add(tabs[i], text =tab)
+        self.pestanas = ["Material","Iniciación","Datos","Comparación"]
+        self.tabControl = ttk.Notebook(self)
+        self.tabs ={}
+        for pestana in self.pestanas:
+            self.tabs[pestana] = ttk.Frame(self.tabControl)
+        
+            self.tabControl.add(self.tabs[pestana], text =pestana)
 
-        tabControl.pack(expand=1,fill= "both")
+        self.tabControl.pack(expand=1,fill= "both")
 
         #Label Frame de propiedades del material
-        props_lf = ttk.Labelframe(tabs[0],text = "Propiedades") 
+        props_lf = ttk.Labelframe(self.tabs["Material"],text = "Propiedades") 
         props_lf.grid(column = 0,row =0,padx =20,pady=30)
 
         # props_lf.place(width=180,height=500)
@@ -68,11 +70,12 @@ class programa(tk.Tk):
         
         
         #Botones de las propiedades
-        boton_borrar = ttk.Button(props_lf,width = 20,text="Borrar todo",command = self.borrar_campos)
-        boton_borrar.grid(column = 0,row =len(self.props),padx =2, pady =5,sticky= tk.W)
-        boton_guardar= ttk.Button(props_lf,text="Confirmar",width=20,command = self.guardar_campos)
-        boton_guardar.grid(column = 1,row =len(self.props),padx =2, pady =5,sticky= tk.W)
-        
+        self.boton_borrar = ttk.Button(props_lf,width = 20,text="Borrar todo",command = self.borrar_campos)
+        self.boton_borrar.grid(column = 0,row =len(self.props),padx =2, pady =5,sticky= tk.W)
+        self.boton_guardar= ttk.Button(props_lf,text="Confirmar",width=20,command = lambda: self.guardar_campos(None))
+        self.boton_guardar.grid(column = 1,row =len(self.props),padx =2, pady =5,sticky= tk.W)
+        self.bind("<Return>",self.guardar_campos)
+
         #combobox
         self.comb_val = ["Acero"]
         self.combo = ttk.Combobox(props_lf,width = 30,value =self.comb_val,font =("Arial",12,"bold"),foreground="green",background="black")
@@ -85,7 +88,7 @@ class programa(tk.Tk):
         # self.probar_btn.grid(column = 0, row = 1, columnspan= 2,padx =10,pady = 5)
         
         #Label Frame del resumen 
-        self.resum_lf =ttk.Labelframe(tabs[0],text = "Resumen")
+        self.resum_lf =ttk.Labelframe(self.tabs["Material"],text = "Resumen")
         self.resum_lf.grid(column = 1,row =0,padx =20,pady=30,sticky=tk.NW)
         self.intro_resumen = ttk.Label(self.resum_lf, text = "Datos que se van a utilizar para la realización de los cálculos:",font = ("Arial",12))
         self.intro_resumen.grid(column = 0, row =0,padx = 20)
@@ -95,9 +98,18 @@ class programa(tk.Tk):
             self.resum_label[prop] = ttk.Label(self.resum_lf,text = prop+": ",font =("Arial",12,"bold")) 
             self.resum_label[prop].grid(column = 0,row =i+1, padx = 5,pady = 5,sticky=tk.W)
 
-    
+        ### Pestaña de Iniciación
+        self.vars_iniciacion_frame = ttk.Labelframe(self.tabs["Iniciación"],text ="Variables para el cálculo de la iniciación",width=500)
+        self.vars_iniciacion_frame.grid(column = 0, row= 0,padx =5, pady = 5)
         
-        
+        # self.boton_iniciacion = ttk.Button(self.vars_iniciacion_frame,text = "Iniciar",command = lambda:curvas_iniciacion(par = 'FS', da=1e-5, W = 10e-3, MAT=self.dict_prop) )
+        # self.boton_iniciacion.pack(fill =tk.X)
+        self.var_param = tk.StringVar()
+        self.var_param.set("SWT")
+        self.CB_param_SWT =ttk.Radiobutton(self.vars_iniciacion_frame,text ="\tSWT",variable= self.var_param,value="SWT",command = lambda: print(self.var_param.get()))
+        self.CB_param_SWT.pack(anchor=tk.W,side = tk.TOP,padx =5)
+        self.CB_param_FS =ttk.Radiobutton(self.vars_iniciacion_frame,text ="\tFS",variable = self.var_param,value="FS",command = lambda: print(self.var_param.get()))
+        self.CB_param_FS.pack(anchor=tk.W,side = tk.TOP,padx = 5)
         
         self.mostrar_info()
 
@@ -124,7 +136,7 @@ class programa(tk.Tk):
             self.props_entries[prop].config(fg="black")
         
 
-    def guardar_campos(self):
+    def guardar_campos(self,event):
         """Guarda los valores en un diccionario que posteriormente se utiliza para la realización
         de los cálculos.
         """
@@ -148,14 +160,14 @@ class programa(tk.Tk):
             for prop in self.props:
                 self.props_entries[prop].config(fg= "green")
                 self.resum_label[prop].config(text = "{}:\t{:.3e}\t{}".format(prop,self.dict_prop[prop],self.dict_units[prop]))
-        print(self.dict_prop)
+        
         
     def mostrar_info(self):
         """Muestra la información del programa en una alerta.
         """
         tk.messagebox.showinfo("Información", """Este programa ha sido desarrollado por David García Serrano\npara el Trabajo de Fin de Máster\nAño 2021""")
 
-
+   
 
         
 
