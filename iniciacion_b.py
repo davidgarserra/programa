@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from scipy.optimize import fsolve
 from propagacion_b import fase_propagacion,MAT
 import numpy as np
-
+import time
 
 def ciclos_totales(param, crit, MAT):
     """Devuelve los ciclos totales en funcion del criterio usado, utilizando 
@@ -110,7 +110,7 @@ def curvas_iniciacion(par, da, W, MAT):
     OUTPUTS: MATX_par.dat = archivo con las curvas de iniciacion
              figura.png   = imagen con las curvas de iniciacion"""
              
-    print(('Curvas de iniciacion del material '
+    print(('\nCurvas de iniciacion del material '
            +'utilizando el parametro {}\n').format(par))
     
     #Abrimos el archivo donde se van a escribir los datos,
@@ -162,6 +162,9 @@ def curvas_iniciacion(par, da, W, MAT):
         archivo.write('{:.2e}  '.format(a))
 
     N_i = np.zeros((n_sigma,n_a)) #inicializamos la matriz de ciclos de iniciación
+
+    # proceso = 0.0
+    t1 = time.time()
     for i in range(len(v_param)):
         archivo.write('\n{:+.2e}'.format(v_param[i]))
         for j,a in enumerate(v_a):
@@ -169,9 +172,13 @@ def curvas_iniciacion(par, da, W, MAT):
             archivo.write(' {:+.6e}'.format(N_i[i,j]))
         #Pintamos en la consola el porcentaje realizado
         print('\r{:.2%} completado'.format((i+1.0)/len(v_param)), end = '')
-    
+        # proceso =(i+1.0)/len(v_param)
+        # return proceso
     #Cerramos el archivo
-    archivo.close()     
+    
+    archivo.close()   
+    t2= time.time()
+    print("\nSe han requerido {:.2f}s".format(t2-t1))  
     
     #Pintamos las curvas de iniciación
     
@@ -195,5 +202,7 @@ def curvas_iniciacion(par, da, W, MAT):
 
 if __name__ == "__main__":
     
-    curvas_iniciacion(par = 'FS', da=1e-5, W = 10e-3, MAT=MAT)
-        
+    
+    curvas_iniciacion(par = 'SWT', da=1e-5, W = 10e-3, MAT=MAT)
+  
+    

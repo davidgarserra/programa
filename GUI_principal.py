@@ -7,7 +7,8 @@ from tkinter import ttk
 import numpy as np
 from iniciacion_b import curvas_iniciacion
 from propagacion_b import MAT
-
+import threading
+import time
 
 class programa(tk.Tk):
     def __init__(self):
@@ -21,7 +22,9 @@ class programa(tk.Tk):
         self.units = ["","","","m","MPa m^0.5","MPa","m","MPa m^0.5","MPa","MPa","MPa","","","MPa"]
         self.dict_prop = {}
         self.mat_values ={}
+
         self.dict_units = dict(zip(self.props,self.units))
+
         for prop in self.props:
             self.mat_values[prop] = tk.StringVar()
         
@@ -60,6 +63,7 @@ class programa(tk.Tk):
         for prop in self.props:
             self.props_entries[prop] = tk.Entry(props_lf,textvariable = self.mat_values[prop],width = 20,justify = "right",font =("Arial",10)) 
         props_labels = [ttk.Label(props_lf,text = f"{p}({self.dict_units[p]})",font =("Arial",10)) for p in self.props]
+        self.props_entries["C"].focus_set()
         self.props_entries["G"].config(state=tk.DISABLED)
         self.props_entries["a_0"].config(state=tk.DISABLED)
 
@@ -100,17 +104,39 @@ class programa(tk.Tk):
 
         ### Pestaña de Iniciación
         self.vars_iniciacion_frame = ttk.Labelframe(self.tabs["Iniciación"],text ="Variables para el cálculo de la iniciación",width=500)
-        self.vars_iniciacion_frame.grid(column = 0, row= 0,padx =5, pady = 5)
-        
+        # self.vars_iniciacion_frame.grid(column = 0, row= 0,padx =5, pady = 5,sticky=tk.W)
+        self.vars_iniciacion_frame.pack(side=tk.TOP,fill =tk.BOTH,padx =5, pady =5)
         # self.boton_iniciacion = ttk.Button(self.vars_iniciacion_frame,text = "Iniciar",command = lambda:curvas_iniciacion(par = 'FS', da=1e-5, W = 10e-3, MAT=self.dict_prop) )
         # self.boton_iniciacion.pack(fill =tk.X)
         self.var_param = tk.StringVar()
         self.var_param.set("SWT")
-        self.CB_param_SWT =ttk.Radiobutton(self.vars_iniciacion_frame,text ="\tSWT",variable= self.var_param,value="SWT",command = lambda: print(self.var_param.get()))
-        self.CB_param_SWT.pack(anchor=tk.W,side = tk.TOP,padx =5)
-        self.CB_param_FS =ttk.Radiobutton(self.vars_iniciacion_frame,text ="\tFS",variable = self.var_param,value="FS",command = lambda: print(self.var_param.get()))
-        self.CB_param_FS.pack(anchor=tk.W,side = tk.TOP,padx = 5)
         
+        self.CB_param_SWT =ttk.Radiobutton(self.vars_iniciacion_frame,text ="\tSWT",variable= self.var_param,value="SWT")
+        self.CB_param_SWT.grid(column = 0, row= 0 , columnspan= 2,pady = 5, padx = 5,sticky = tk.W)
+        self.CB_param_FS =ttk.Radiobutton(self.vars_iniciacion_frame,text ="\tFS",variable = self.var_param,value="FS")
+        self.CB_param_FS.grid(column = 0, row= 1 , columnspan= 2,pady = 5, padx = 5,sticky = tk.W)
+        
+        self.W_entry = ttk.Entry(self.vars_iniciacion_frame,width = 6,justify=tk.RIGHT)
+        self.W_entry.grid(column = 0, row =2, sticky= tk.W,padx=5,pady=5)
+        self.W_label = ttk.Label(self.vars_iniciacion_frame,text = "W")
+        self.W_label.grid(column =1, row = 2, sticky= tk.W)
+        self.W_entry.insert(0,"10e-3")
+        
+        self.da_entry = ttk.Entry(self.vars_iniciacion_frame,width = 6,justify=tk.RIGHT)
+        self.da_entry.grid(column = 0, row =3, sticky= tk.W,padx=5,pady=5)
+        self.da_label = ttk.Label(self.vars_iniciacion_frame,text = "da")
+        self.da_label.grid(column =1, row = 3, sticky= tk.W)
+        self.da_entry.insert(0,"1e-5")
+        #boton de probar
+        self.ini_btn = ttk.Button(self.vars_iniciacion_frame,text = "Ejecutar iniciación",command =self.ejecutar_iniciacion)
+        self.ini_btn.grid(column = 0,row= 4,columnspan=2 ,sticky=tk.W,padx = 5, pady = 5)
+
+        #Progress bar
+        self.progress_bar = ttk.Progressbar(self.tabs["Iniciación"],orient = tk.HORIZONTAL,length=900,maximum=80)
+        # self.progress_bar.grid(column =0, row =2,sticky=tk.S,padx=5,pady = 5)
+        self.progress_bar.pack(side = tk.BOTTOM,fill =tk.X,padx =5, pady = 5)
+
+
         self.mostrar_info()
 
         
@@ -167,6 +193,30 @@ class programa(tk.Tk):
         """
         tk.messagebox.showinfo("Información", """Este programa ha sido desarrollado por David García Serrano\npara el Trabajo de Fin de Máster\nAño 2021""")
 
+    def progress_time(self):
+        for i in range(1,72):
+            time.sleep(1)
+            self.progress_bar["value"]=i
+
+            self.update_idletasks()
+        return None
+
+    
+    def ejecutar_iniciacion(self):
+        p =self.var_param.get()
+        da =float(self.da_entry.get())
+        w= float(self.W_entry.get())
+        mat=self.dict_prop
+        t1 = threading.Thread(target=self.progress_time)
+        t2 = threading.Thread(target=lambda:curvas_iniciacion(par = p,da =da ,W = w,MAT=mat ))
+        t1.start()
+        t2.start()
+
+        
+       
+
+       
+        # self.progress_bar["value"] =self.proceso
    
 
         
