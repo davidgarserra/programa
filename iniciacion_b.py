@@ -182,20 +182,21 @@ def curvas_iniciacion(par, da, W, MAT):
     
     #Pintamos las curvas de iniciación
     
-    plt.figure()
-    for i in range(n_a):
-        plt.plot(N_i[:,i],v_sigma)
-    plt.grid()
-    plt.title(f"Curvas de iniciación para el parámetro {par}")
-    plt.xscale("log")
-    plt.xlabel("Ciclos")
-    plt.ylabel("$\sigma (MPa)$")
+    # plt.figure()
+    # for i in range(n_a):
+    #     plt.plot(N_i[:,i],v_sigma)
+    # plt.grid()
+    # plt.title(f"Curvas de iniciación para el parámetro {par}")
+    # plt.xscale("log")
+    # plt.xlabel("Ciclos")
+    # plt.ylabel("$\sigma (MPa)$")
 
-    # #Guardamos la figura y la cerramos
-    plt.savefig(ruta_fig+f'/curvas_inic_{par}.png')
-    plt.show()
-    plt.close(1)
-    # return N_i,n_a,v_sigma
+    # # #Guardamos la figura y la cerramos
+    # plt.savefig(ruta_fig+f'/curvas_inic_{par}.png')
+    # plt.show()
+    # plt.close(1)
+
+    return N_i,n_a,v_sigma
 
 # def plot_N_i(par,N_i,v_sigma,n_a):
 #     plt.figure()
@@ -216,7 +217,7 @@ def curvas_iniciacion(par, da, W, MAT):
 if __name__ == "__main__":
     
     par = "SWT"
-    curvas_iniciacion(par = par, da=1e-5, W = 10e-3, MAT=MAT)
+    N_i,n_a,v_sigma =curvas_iniciacion(par = par, da=1e-5, W = 10e-3, MAT=MAT)
     
     
     

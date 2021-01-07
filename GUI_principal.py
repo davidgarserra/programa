@@ -27,6 +27,13 @@ class programa(tk.Tk):
 
         self.dict_units = dict(zip(self.props,self.units))
 
+        self.N_i=[]
+        self.n_a=1
+        self.v_sigma=[]
+        self.par =""
+        self.W =0.0
+        self.da =0.0
+
         for prop in self.props:
             self.mat_values[prop] = tk.StringVar()
         
@@ -144,12 +151,7 @@ class programa(tk.Tk):
         self.chart.get_tk_widget().pack(fill = tk.BOTH,padx =5,pady =5)
 
 
-        #Progress bar
-        self.progress_bar = ttk.Progressbar(self.tabs["Iniciación"],orient = tk.HORIZONTAL,length=900,maximum=70)
-        # self.progress_bar.grid(column =0, row =2,sticky=tk.S,padx=5,pady = 5)
-        self.progress_bar.pack(side = tk.BOTTOM,fill =tk.X,padx =5, pady = 5)
-
-
+        
         self.mostrar_info()
 
         
@@ -206,25 +208,13 @@ class programa(tk.Tk):
         """
         tk.messagebox.showinfo("Información", """Este programa ha sido desarrollado por David García Serrano\npara el Trabajo de Fin de Máster\nAño 2021""")
 
-    def progress_time(self):
-        for i in range(1,71):
-            time.sleep(1)
-            self.progress_bar["value"]=i
 
-            self.update_idletasks()
-        return None
-
-    
-    def ejecutar_iniciacion(self):
-        p =self.var_param.get()
-        da =float(self.da_entry.get())
-        w= float(self.W_entry.get())
-        mat=self.dict_prop
-        t1 = threading.Thread(target=self.progress_time)
-        t2 = threading.Thread(target=lambda:curvas_iniciacion(par = p,da =da ,W = w,MAT=mat ))
-        t1.start()
-        t2.start()
-
+    def ejecutar_curvas(self):
+        self.par =self.var_param.get()
+        self.da =float(self.da_entry.get())
+        self.W= float(self.W_entry.get())
+        
+        self.N_i,self.n_a,self.v_sigma =curvas_iniciacion(par = self.par, da=self.da, W = self.W, MAT=self.dict_prop)
         
        
 
