@@ -152,7 +152,7 @@ def curvas_iniciacion(par, da, W, MAT):
     v_gamma = v_sigma/2/G 
     v_param = v_gamma*(1.0+k*v_sigma/2.0/sigma_y) if par =='FS' else v_sigma*v_def
                                     
-    n_a   = 10          #Número de curvas de iniciacion por material
+    n_a   = 10        #Número de curvas de iniciacion por material
     a_min = 5e-5           #Tamaño más pequeño grieta
     ex    = 1.45		   #Variable para controlar como crece la diferencia
     					   #entre longitudes de grieta
@@ -195,6 +195,19 @@ def curvas_iniciacion(par, da, W, MAT):
     plt.savefig(ruta_fig+f'/curvas_inic_{par}.png')
     plt.show()
     plt.close(1)
+    # return N_i,n_a,v_sigma
+
+# def plot_N_i(par,N_i,v_sigma,n_a):
+#     plt.figure()
+#     for i in range(n_a):
+#         plt.plot(N_i[:,i],v_sigma)
+#     plt.grid()
+#     plt.title(f"Curvas de iniciación para el parámetro {par}")
+#     plt.xscale("log")
+#     plt.xlabel("Ciclos")
+#     plt.ylabel("$\sigma (MPa)$")
+#     plt.show()
+
    
     
 ###############################################################################
@@ -202,7 +215,13 @@ def curvas_iniciacion(par, da, W, MAT):
 
 if __name__ == "__main__":
     
+    par = "SWT"
+    curvas_iniciacion(par = par, da=1e-5, W = 10e-3, MAT=MAT)
     
-    curvas_iniciacion(par = 'SWT', da=1e-5, W = 10e-3, MAT=MAT)
+    
+    
+
+   
+    
   
     
