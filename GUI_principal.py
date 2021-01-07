@@ -5,7 +5,7 @@
 import  tkinter as tk
 from tkinter import ttk
 import numpy as np
-from iniciacion_b import curvas_iniciacion
+from iniciacion_b import curvas_iniciacion,plot_N_i
 from propagacion_b import MAT
 import threading
 import time
@@ -139,16 +139,15 @@ class programa(tk.Tk):
         self.da_label.grid(column =1, row = 3, sticky= tk.W)
         self.da_entry.insert(0,"1e-5")
         #boton de probar
-        self.ini_btn = ttk.Button(self.vars_iniciacion_frame,text = "Ejecutar iniciación",command =self.ejecutar_iniciacion)
+        self.ini_btn = ttk.Button(self.vars_iniciacion_frame,text = "Ejecutar iniciación",command =self.ejecutar_curvas)
         self.ini_btn.grid(column = 0,row= 4,columnspan=2 ,sticky=tk.W,padx = 5, pady = 5)
 
         #CHART
-        self.figure = plt.figure(figsize =(4,4),dpi=100)
+        self.figure = plt.figure(figsize =(6,4),dpi=150)
         self.figure.add_subplot(111)
         plt.grid()
-        plt.title("HOLA ESTO ES UNA PRUEBA")
         self.chart = FigureCanvasTkAgg(self.figure,self.tabs["Iniciación"])
-        self.chart.get_tk_widget().pack(fill = tk.BOTH,padx =5,pady =5)
+        self.chart.get_tk_widget().pack(padx =5,pady =5)
 
 
         
@@ -208,6 +207,20 @@ class programa(tk.Tk):
         """
         tk.messagebox.showinfo("Información", """Este programa ha sido desarrollado por David García Serrano\npara el Trabajo de Fin de Máster\nAño 2021""")
 
+    def plot_iniciacion(self):
+        # self.figure = plt.figure(figsize =(8,4),dpi=200)
+        # self.figure.add_subplot(111)
+        for i in range(self.n_a):
+            
+            plt.plot(self.N_i[:,i],self.v_sigma)
+        plt.grid()
+        plt.title(f"Curvas de iniciación para el parámetro {self.par}")
+        plt.xscale("log")
+        plt.xlabel("Ciclos")
+        plt.ylabel("$\sigma (MPa)$")
+        # self.chart = FigureCanvasTkAgg(self.figure,self.tabs["Iniciación"])
+        # self.chart.get_tk_widget().pack(padx =5,pady =5)
+        
 
     def ejecutar_curvas(self):
         self.par =self.var_param.get()
@@ -215,8 +228,9 @@ class programa(tk.Tk):
         self.W= float(self.W_entry.get())
         
         self.N_i,self.n_a,self.v_sigma =curvas_iniciacion(par = self.par, da=self.da, W = self.W, MAT=self.dict_prop)
-        
-       
+
+        self.plot_iniciacion()
+      
 
        
         # self.progress_bar["value"] =self.proceso

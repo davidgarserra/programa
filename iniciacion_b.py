@@ -198,16 +198,16 @@ def curvas_iniciacion(par, da, W, MAT):
 
     return N_i,n_a,v_sigma
 
-# def plot_N_i(par,N_i,v_sigma,n_a):
-#     plt.figure()
-#     for i in range(n_a):
-#         plt.plot(N_i[:,i],v_sigma)
-#     plt.grid()
-#     plt.title(f"Curvas de iniciación para el parámetro {par}")
-#     plt.xscale("log")
-#     plt.xlabel("Ciclos")
-#     plt.ylabel("$\sigma (MPa)$")
-#     plt.show()
+def plot_N_i(par,N_i,v_sigma,n_a):
+    plt.figure()
+    for i in range(n_a):
+        plt.plot(N_i[:,i],v_sigma)
+    plt.grid()
+    plt.title(f"Curvas de iniciación para el parámetro {par}")
+    plt.xscale("log")
+    plt.xlabel("Ciclos")
+    plt.ylabel("$\sigma (MPa)$")
+    plt.show()
 
    
     
