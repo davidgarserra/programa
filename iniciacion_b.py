@@ -124,9 +124,9 @@ def curvas_iniciacion(par, da, W, MAT):
     else:
         os.mkdir(ruta_fig)
 
-    archivo  = open('{}/MAT_{}.dat'.format(ruta, par), 'w')
+    archivo  = open('{}/MAT_{}.csv'.format(ruta, par), 'w')
         
-    archivo.write('0      ')
+    archivo.write('{:.3e}\t'.format(0.0000))
     
     v_sigma     = []       #Vector de tensiones
     v_param     = []       #Vector de Fatemi-Socie o Smith-Watson-Topper
@@ -159,17 +159,17 @@ def curvas_iniciacion(par, da, W, MAT):
        
     v_a = [a_min*(i+1.0)**ex for i in range(n_a)] #Vector de tamaños de grietas
     for a in v_a:
-        archivo.write('{:.2e}  '.format(a))
+        archivo.write('{:.3e}\t'.format(a))
 
     N_i = np.zeros((n_sigma,n_a)) #inicializamos la matriz de ciclos de iniciación
 
     # proceso = 0.0
     t1 = time.time()
     for i in range(len(v_param)):
-        archivo.write('\n{:+.2e}'.format(v_param[i]))
+        archivo.write('\n{:.3e}\t'.format(v_param[i]))
         for j,a in enumerate(v_a):
             N_i[i,j]  = fase_iniciacion(v_param[i], v_sigma[i], par, a, da, W, MAT)
-            archivo.write(' {:+.6e}'.format(N_i[i,j]))
+            archivo.write('{:.3e}\t'.format(N_i[i,j]))
         #Pintamos en la consola el porcentaje realizado
         print('\r{:.2%} completado'.format((i+1.0)/len(v_param)), end = '')
         # proceso =(i+1.0)/len(v_param)

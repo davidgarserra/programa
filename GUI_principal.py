@@ -7,19 +7,20 @@ from tkinter import ttk
 import numpy as np
 from iniciacion_b import curvas_iniciacion,plot_N_i
 from propagacion_b import MAT
-import threading
-import time
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg,NavigationToolbar2Tk
+import pandas as pd
 
 class programa(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Cálculo de Fatiga")
-        self.geometry("1000x600+10+10")
+        self.state("zoomed")
+        
+        self.geometry("800x600+10+10")
         
 
-        #variables 
+        ### variables 
         self.props = ["C","n","f","l_0","K_th","sigma_fl","a_0","K_IC","sigma_y","sigma_f","E","nu","b","G"]
         self.units = ["","","","m","MPa m^0.5","MPa","m","MPa m^0.5","MPa","MPa","MPa","","","MPa"]
         self.dict_prop = {}
@@ -33,13 +34,16 @@ class programa(tk.Tk):
         self.par =""
         self.W =0.0
         self.da =0.0
+        self.filename =""
+        self.df =pd.DataFrame()
+        
 
         for prop in self.props:
             self.mat_values[prop] = tk.StringVar()
         
     
 
-        #Menu
+        ### Menu
         menu = tk.Menu(self)
         file_menu = tk.Menu(menu, tearoff=0)
         file_menu.add_command(label="Nuevo")
@@ -92,15 +96,11 @@ class programa(tk.Tk):
         #combobox
         self.comb_val = ["Acero"]
         self.combo = ttk.Combobox(props_lf,width = 30,value =self.comb_val,font =("Arial",12,"bold"),foreground="green",background="black")
-        # self.combo.current(0)
         self.combo.bind("<<ComboboxSelected>>",self.combosel) 
         self.combo.grid(column = 0, row = len(self.props)+1,columnspan=2,padx = 5, pady = 8)
         
-        #boton pruebav
-        # self.probar_btn = ttk.Button(tabs[0],text = "probar",command=lambda: curvas_iniciacion(par = 'FS', da=1e-5, W = 10e-3, MAT=self.dict_prop))
-        # self.probar_btn.grid(column = 0, row = 1, columnspan= 2,padx =10,pady = 5)
-        
-        #Label Frame del resumen 
+       
+        ### Label Frame del resumen 
         self.resum_lf =ttk.Labelframe(self.tabs["Material"],text = "Resumen")
         self.resum_lf.grid(column = 1,row =0,padx =20,pady=30,sticky=tk.NW)
         self.intro_resumen = ttk.Label(self.resum_lf, text = "Datos que se van a utilizar para la realización de los cálculos:",font = ("Arial",12))
@@ -112,13 +112,10 @@ class programa(tk.Tk):
             self.resum_label[prop].grid(column = 0,row =i+1, padx = 5,pady = 5,sticky=tk.W)
 
         ### Pestaña de Iniciación
-        self.Frame_Iniciacion = tk.Frame(self.tabs["Iniciación"])
-        self.Frame_Iniciacion.pack(fill = tk.BOTH)
-        self.vars_iniciacion_frame = ttk.Labelframe(self.Frame_Iniciacion,text ="Variables para el cálculo de la iniciación",width=500)
-        self.vars_iniciacion_frame.grid(column = 0, row= 0,padx =5, pady = 5,sticky=tk.NW)
-        # self.vars_iniciacion_frame.pack(side=tk.TOP,padx =5, pady =5)
-        # self.boton_iniciacion = ttk.Button(self.vars_iniciacion_frame,text = "Iniciar",command = lambda:curvas_iniciacion(par = 'FS', da=1e-5, W = 10e-3, MAT=self.dict_prop) )
-        # self.boton_iniciacion.pack(fill =tk.X)
+
+        self.vars_iniciacion_frame = ttk.Labelframe(self.tabs["Iniciación"],text ="Variables para el cálculo de la iniciación",width=1200,height= 600)
+        self.vars_iniciacion_frame.place(relx= 0.01,rely =0.01,relwidth=0.975,relheight=0.25)
+        
         self.var_param = tk.StringVar()
         self.var_param.set("SWT")
         
@@ -127,9 +124,9 @@ class programa(tk.Tk):
         self.CB_param_FS =ttk.Radiobutton(self.vars_iniciacion_frame,text ="\tFS",variable = self.var_param,value="FS")
         self.CB_param_FS.grid(column = 0, row= 1 , columnspan= 2,pady = 5, padx = 5,sticky = tk.W)
         
-        self.W_entry = ttk.Entry(self.vars_iniciacion_frame,width = 6,justify=tk.RIGHT)
+        self.W_entry = ttk.Entry(self.vars_iniciacion_frame,width = 6,justify=tk.RIGHT,font =("Arial",10))
         self.W_entry.grid(column = 0, row =2, sticky= tk.W,padx=5,pady=5)
-        self.W_label = ttk.Label(self.vars_iniciacion_frame,text = "W")
+        self.W_label = ttk.Label(self.vars_iniciacion_frame,text = "W",font =("Arial",10))
         self.W_label.grid(column =1, row = 2, sticky= tk.W)
         self.W_entry.insert(0,"10e-3")
         
@@ -138,22 +135,71 @@ class programa(tk.Tk):
         self.da_label = ttk.Label(self.vars_iniciacion_frame,text = "da")
         self.da_label.grid(column =1, row = 3, sticky= tk.W)
         self.da_entry.insert(0,"1e-5")
+        
         #boton de probar
         self.ini_btn = ttk.Button(self.vars_iniciacion_frame,text = "Ejecutar iniciación",command =self.ejecutar_curvas)
         self.ini_btn.grid(column = 0,row= 4,columnspan=2 ,sticky=tk.W,padx = 5, pady = 5)
 
+       
+        
+        #TreeFrame 
+        
+        self.tree_frame = tk.Frame(self.tabs["Iniciación"],bg ="red")
+        self.tree_frame.place(relx =0.51,rely =0.27,relwidth=0.475,relheight=0.7)
+        
+        self.tree_scrollbarx = ttk.Scrollbar(self.tree_frame,orient =tk.HORIZONTAL)
+        self.tree_scrollbary = ttk.Scrollbar(self.tree_frame,orient =tk.VERTICAL)
+    
+        self.tree_view =ttk.Treeview(self.tree_frame,xscrollcommand = self.tree_scrollbarx.set,yscrollcommand =self.tree_scrollbary.set)
+        
+        self.tree_scrollbarx.config(command =self.tree_view.xview)
+        self.tree_scrollbary.config(command =self.tree_view.yview)
+        
+        
         #CHART
-        self.figure = plt.figure(figsize =(6,4),dpi=150)
-        self.figure.add_subplot(111)
-        plt.grid()
-        self.chart = FigureCanvasTkAgg(self.figure,self.tabs["Iniciación"])
-        self.chart.get_tk_widget().pack(padx =5,pady =5)
-
-
+        self.canvas_chart = tk.Frame(self.tabs["Iniciación"],width = 720,height = 550,bg="grey", relief="sunken",borderwidth=3)
+        self.canvas_chart.place(relx =0.01,rely =0.27,relwidth=0.475,relheight=0.7)
         
-        self.mostrar_info()
-
+    
         
+        
+        ### Pestaña Datos 
+        
+        #Label frame de datos experimentales
+        self.dat_exp_lf = ttk.LabelFrame(self.tabs["Datos"],text = "Datos Experimentales")
+        self.dat_exp_lf.place(x = 10,y = 5,relwidth=0.98,relheight=0.2)
+        
+        #combobox 
+        self.combo_exp = ttk.Combobox(self.dat_exp_lf)
+        self.combo_exp.grid(column = 0, row =0,padx = 5, pady = 5)
+        
+        #Label frame acabado 
+        self.acabado_lf =ttk.Labelframe(self.dat_exp_lf,text = "Tipo de acabado")
+        self.acabado_lf.grid(column = 1, row =0,padx = 5, pady = 5)
+        
+        #RadioButtons de acabado 
+        
+        self.acabado_RB = {}
+        self.acabado_var = tk.StringVar()
+        self.acabado_var.set("Sin Acabado")
+        
+        self.acabados =["Sin Acabado","Electroerosion","Shotpeeling"];
+        
+        for a in self.acabados: 
+            self.acabado_RB[a]=ttk.Radiobutton(self.acabado_lf,text=a,variable =self.acabado_var, value =a)
+            self.acabado_RB[a].pack(anchor = tk.W,padx = 5, pady = 5)
+            
+        
+        #Boton Cargar datos 
+        
+        self.cargar_dat_btn  = ttk.Button(self.dat_exp_lf, text = "Cargar Datos",command= lambda: tk.filedialog.askdirectory())
+        self.cargar_dat_btn.grid(column = 2, row= 0, padx = 5, pady = 5)
+        
+        
+        
+        # self.mostrar_info()
+        
+        ### Funciones
     def combosel(self,event):
         """Selecciona un valor de la lista y completa los campos con los valores asignados.
         """
@@ -208,8 +254,8 @@ class programa(tk.Tk):
         tk.messagebox.showinfo("Información", """Este programa ha sido desarrollado por David García Serrano\npara el Trabajo de Fin de Máster\nAño 2021""")
 
     def plot_iniciacion(self):
-        # self.figure = plt.figure(figsize =(8,4),dpi=200)
-        # self.figure.add_subplot(111)
+        self.figure = plt.figure(figsize =(6,4),dpi=100)
+        self.figure.add_subplot(111)
         for i in range(self.n_a):
             
             plt.plot(self.N_i[:,i],self.v_sigma)
@@ -218,8 +264,11 @@ class programa(tk.Tk):
         plt.xscale("log")
         plt.xlabel("Ciclos")
         plt.ylabel("$\sigma (MPa)$")
-        # self.chart = FigureCanvasTkAgg(self.figure,self.tabs["Iniciación"])
-        # self.chart.get_tk_widget().pack(padx =5,pady =5)
+        self.chart = FigureCanvasTkAgg(self.figure,self.canvas_chart)
+        self.chart.draw()
+        self.toolbar  = NavigationToolbar2Tk(self.chart,self.canvas_chart)
+        self.toolbar.update()
+        self.chart.get_tk_widget().pack(side = tk.TOP,padx =5,pady =5,fill= tk.BOTH,expand = 1)
         
 
     def ejecutar_curvas(self):
@@ -230,10 +279,37 @@ class programa(tk.Tk):
         self.N_i,self.n_a,self.v_sigma =curvas_iniciacion(par = self.par, da=self.da, W = self.W, MAT=self.dict_prop)
 
         self.plot_iniciacion()
+        self.cargar_csv()
       
+        
+    def cargar_csv(self):
+        
+        try: 
+            self.filename ="curvas_inic/MAT_{}.csv".format(self.par)
+            self.df  =pd.read_csv(self.filename,sep="\t").dropna(axis =1)
+        
+        except ValueError:
+            print("NO existe el archivo")
+        except FileNotFoundError:
+            print("NO existe el archivo")
 
-       
-        # self.progress_bar["value"] =self.proceso
+        self.tree_view.delete(*self.tree_view.get_children())
+
+        self.tree_view["column"] = list(self.df.columns.values)
+        self.tree_view["show"] = "headings"
+
+        for column in self.tree_view["column"] :
+            self.tree_view.heading(str(column), text= str(column))
+
+        df_rows = self.df.to_numpy().tolist()
+        
+     
+        for row in df_rows:
+            self.tree_view.insert("","end",values = tuple(row))
+    
+        self.tree_scrollbarx.pack(side= tk.BOTTOM,fill =tk.X)
+        self.tree_scrollbary.pack(side= tk.RIGHT,fill =tk.Y)
+        self.tree_view.pack(fill =tk.BOTH, expand=1)
    
 
         
