@@ -2,10 +2,11 @@
 
 @author: David García Serrano
 """
+import os
 import  tkinter as tk
 from tkinter import ttk
 import numpy as np
-from iniciacion_b import curvas_iniciacion,plot_N_i
+from iniciacion_b import curvas_iniciacion
 from propagacion_b import MAT
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg,NavigationToolbar2Tk
@@ -37,6 +38,19 @@ class programa(tk.Tk):
         self.filename =""
         self.df =pd.DataFrame()
         
+        
+        
+        self.dir_exp =""
+        self.files_exp =[]
+        self.subdir_exp =""
+        self.exp_files_path =""
+        self.file_path =""
+        self.acabados =["Sin Acabado","Electroerosion","Shotpeeling"]
+        self.dict_acabados={self.acabados[0]:"sin_tratamiento",
+                            self.acabados[2]:"shot_peening",
+                            self.acabados[1]:"electroerosion"}
+        self.acabado_var = tk.StringVar()
+        self.df_datos =pd.DataFrame()
 
         for prop in self.props:
             self.mat_values[prop] = tk.StringVar()
@@ -44,17 +58,17 @@ class programa(tk.Tk):
     
 
         ### Menu
-        menu = tk.Menu(self)
-        file_menu = tk.Menu(menu, tearoff=0)
-        file_menu.add_command(label="Nuevo")
-        file_menu.add_command(label="Abrir")
-        file_menu.add_separator()
-        file_menu.add_command(label="Guardar")
-        file_menu.add_command(label="Guardar como...")
-        menu.add_cascade(label="Archivo", menu=file_menu)
-        menu.add_command(label="Acerca de",command =self.mostrar_info)
-        menu.add_command(label="Salir", command=self.destroy)
-        self.config(menu=menu)
+        self.menu = tk.Menu(self)
+        self.file_menu = tk.Menu(self.menu, tearoff=0)
+        self.file_menu.add_command(label="Nuevo")
+        self.file_menu.add_command(label="Abrir",command=self.carga_datos)
+        self.file_menu.add_separator()
+        self.file_menu.add_command(label="Guardar")
+        self.file_menu.add_command(label="Guardar como...")
+        self.menu.add_cascade(label="Archivo", menu=self.file_menu)
+        self.menu.add_command(label="Acerca de",command =self.mostrar_info)
+        self.menu.add_command(label="Salir", command=self.destroy)
+        self.config(menu=self.menu)
 
         #Pestañas 
         self.pestanas = ["Material","Iniciación","Datos","Comparación"]
@@ -91,7 +105,7 @@ class programa(tk.Tk):
         self.boton_borrar.grid(column = 0,row =len(self.props),padx =2, pady =5,sticky= tk.W)
         self.boton_guardar= ttk.Button(props_lf,text="Confirmar",width=20,command = lambda: self.guardar_campos(None))
         self.boton_guardar.grid(column = 1,row =len(self.props),padx =2, pady =5,sticky= tk.W)
-        self.bind("<Return>",self.guardar_campos)
+        self.tabs["Material"].bind("<Return>",self.guardar_campos)
 
         #combobox
         self.comb_val = ["Acero"]
@@ -160,18 +174,19 @@ class programa(tk.Tk):
         self.canvas_chart = tk.Frame(self.tabs["Iniciación"],width = 720,height = 550,bg="grey", relief="sunken",borderwidth=3)
         self.canvas_chart.place(relx =0.01,rely =0.27,relwidth=0.475,relheight=0.7)
         
-    
-        
-        
         ### Pestaña Datos 
         
         #Label frame de datos experimentales
         self.dat_exp_lf = ttk.LabelFrame(self.tabs["Datos"],text = "Datos Experimentales")
-        self.dat_exp_lf.place(x = 10,y = 5,relwidth=0.98,relheight=0.2)
+        self.dat_exp_lf.place(relx = 0.01,rely = 0.01,relwidth=0.98,relheight=0.2)
         
         #combobox 
-        self.combo_exp = ttk.Combobox(self.dat_exp_lf)
+        self.combo_exp = ttk.Combobox(self.dat_exp_lf,width =50)
+        self.combo_exp.bind("<<ComboboxSelected>>",self.sel_exp) 
         self.combo_exp.grid(column = 0, row =0,padx = 5, pady = 5)
+        
+        
+       
         
         #Label frame acabado 
         self.acabado_lf =ttk.Labelframe(self.dat_exp_lf,text = "Tipo de acabado")
@@ -180,20 +195,30 @@ class programa(tk.Tk):
         #RadioButtons de acabado 
         
         self.acabado_RB = {}
-        self.acabado_var = tk.StringVar()
+        
+        
         self.acabado_var.set("Sin Acabado")
         
-        self.acabados =["Sin Acabado","Electroerosion","Shotpeeling"];
+        
+
         
         for a in self.acabados: 
-            self.acabado_RB[a]=ttk.Radiobutton(self.acabado_lf,text=a,variable =self.acabado_var, value =a)
+            self.acabado_RB[a]=ttk.Radiobutton(self.acabado_lf,text=a,variable =self.acabado_var, value =a,command=self.sel_acabado)
             self.acabado_RB[a].pack(anchor = tk.W,padx = 5, pady = 5)
-            
+        
         
         #Boton Cargar datos 
-        
-        self.cargar_dat_btn  = ttk.Button(self.dat_exp_lf, text = "Cargar Datos",command= lambda: tk.filedialog.askdirectory())
+        self.cargar_dat_btn  = ttk.Button(self.dat_exp_lf, text = "Cargar Datos",command= self.carga_datos)
         self.cargar_dat_btn.grid(column = 2, row= 0, padx = 5, pady = 5)
+
+        # Label Frame Gráficas 
+        self.graf_lf = ttk.Labelframe(self.tabs["Datos"],text = "Gráficas")
+        self.graf_lf.place(relx = 0.01, rely =0.22,relheight=0.75,relwidth= 0.48)
+
+        # Label Frame Treeview
+        self.dat_tree_lf = ttk.Labelframe(self.tabs["Datos"],text = "Datos")
+        self.dat_tree_lf.place(relx = 0.5, rely =0.22,relheight=0.75,relwidth= 0.48)
+
         
         
         
@@ -254,6 +279,9 @@ class programa(tk.Tk):
         tk.messagebox.showinfo("Información", """Este programa ha sido desarrollado por David García Serrano\npara el Trabajo de Fin de Máster\nAño 2021""")
 
     def plot_iniciacion(self):
+        if len(self.canvas_chart.winfo_children())>=1:
+            for widget in self.canvas_chart.winfo_children():
+                widget.destroy()
         self.figure = plt.figure(figsize =(6,4),dpi=100)
         self.figure.add_subplot(111)
         for i in range(self.n_a):
@@ -310,7 +338,57 @@ class programa(tk.Tk):
         self.tree_scrollbarx.pack(side= tk.BOTTOM,fill =tk.X)
         self.tree_scrollbary.pack(side= tk.RIGHT,fill =tk.Y)
         self.tree_view.pack(fill =tk.BOTH, expand=1)
-   
+
+    def carga_datos(self):
+        self.subdir_exp = self.acabado_var.get()
+        self.dir_exp= tk.filedialog.askdirectory(title= "Abrir carpeta",initialdir=r"D:\Users\davidgarserra\Desktop\CLASE\MASTER\TFM")
+        
+        try:
+            self.exp_files_path = os.path.join(self.dir_exp,self.dict_acabados[self.subdir_exp])
+            self.files_exp = os.listdir(path=self.exp_files_path)
+            self.combo_exp.config(value= self.files_exp)
+        except FileNotFoundError:
+            tk.messagebox.showerror("ERROR","En esta ruta no se encuentran las carpetas con los experimentos. Selecciona otra carpeta")
+            
+     
+    def sel_exp(self,event):
+        if len(self.graf_lf.winfo_children())>=1:
+            for widget in self.graf_lf.winfo_children():
+                widget.destroy()
+                
+
+        self.file_path = os.path.join(self.exp_files_path,self.combo_exp.get())
+        self.df_datos = pd.read_table(self.file_path,sep="\s+")
+        self.df_datos.Y = -self.df_datos.Y*1e-3-0.1
+        
+        self.dat_figure = plt.figure(figsize=(6,4),dpi = 100)
+        self.dat_figure.add_subplot(111)
+        plt.plot(self.df_datos.Y,self.df_datos.s_xx)
+        plt.grid()
+        plt.title(f"Tensión con la profundidad")
+        plt.xlabel("profundidad")
+        plt.ylabel("$\sigma (MPa)$")
+        self.dat_chart= FigureCanvasTkAgg(self.dat_figure,self.graf_lf)
+        self.dat_chart.draw()
+        self.toolbar_dat  = NavigationToolbar2Tk(self.dat_chart,self.graf_lf)
+        self.toolbar_dat.update()
+        self.dat_chart.get_tk_widget().pack(side = tk.TOP,padx =5,pady =5,fill= tk.BOTH,expand = 1)
+        
+        
+    def sel_acabado(self):
+        try:
+            self.subdir_exp = self.acabado_var.get()
+            self.exp_files_path = os.path.join(self.dir_exp,self.dict_acabados[self.subdir_exp])
+            self.files_exp = os.listdir(path=self.exp_files_path)
+            self.combo_exp.config(value= self.files_exp)
+        except FileNotFoundError:
+            tk.messagebox.showerror("ERROR","No existen la carpeta con los experimentos")
+        
+        
+        
+        
+        
+        
 
         
 
