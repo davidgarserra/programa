@@ -224,7 +224,7 @@ class programa(tk.Tk):
         self.label_eje_x.grid(column =0, row =0, padx = 5)
         self.label_eje_y.grid(column =0, row = 1, padx = 5, pady =5)
 
-        self.btn_graf =ttk. Button(self.graf_opt_frame,text = "Graficar")
+        self.btn_graf =ttk. Button(self.graf_opt_frame,text = "Actualizar",command =self.actualizar_grafica)
         self.btn_graf.grid(column = 2, row = 0, rowspan= 2, padx = 5, pady = 5)
 
 
@@ -375,30 +375,35 @@ class programa(tk.Tk):
             
      
     def sel_exp(self,event):
-        if len(self.graf_lf.winfo_children())>=1:
-            for widget in self.graf_frame.winfo_children():
-                widget.destroy()
-                
-
+        # if len(self.graf_lf.winfo_children())>=1:
+        #     for widget in self.graf_frame.winfo_children():
+        #         widget.destroy()
         self.file_path = os.path.join(self.exp_files_path,self.combo_exp.get())
         self.df_datos = pd.read_table(self.file_path,sep="\s+")
         self.df_datos.Y = -self.df_datos.Y*1e-3-0.1
         self.df_datos = self.df_datos.drop(r"%X",axis=1)
         
-        self.dat_figure = plt.figure(figsize=(6,4),dpi = 100)
-        self.dat_figure.add_subplot(111)
-        plt.plot(self.df_datos.Y,self.df_datos.s_xx)
-        plt.grid()
-        plt.title(f"Tensión con la profundidad")
-        plt.xlabel("profundidad")
-        plt.ylabel("$\sigma (MPa)$")
-        self.dat_chart= FigureCanvasTkAgg(self.dat_figure,self.graf_frame)
-        self.dat_chart.draw()
-        self.toolbar_dat  = NavigationToolbar2Tk(self.dat_chart,self.graf_frame)
-        self.toolbar_dat.update()
-        self.dat_chart.get_tk_widget().pack(fill = tk.BOTH,expand=1)
-        
         self.dat_tv.delete(*self.dat_tv.get_children())
+
+        self.combo_eje_x.config(value=list(self.df_datos.columns.values))
+        self.combo_eje_y.config(value=list(self.df_datos.columns.values))
+        self.combo_eje_x.set("Y")
+        self.combo_eje_y.set("s_xx")
+
+        # self.dat_figure = plt.figure(figsize=(6,4),dpi = 100)
+        # self.dat_figure.add_subplot(111)
+        # plt.plot(self.df_datos[self.combo_eje_x.get()],self.df_datos[self.combo_eje_y.get()])
+        # plt.grid()
+        # plt.title(f"Gráfica de {self.combo_eje_y.get()} con respecto {self.combo_eje_x.get()}")
+        # plt.xlabel(f"{self.combo_eje_x.get()}")
+        # plt.ylabel(f"{self.combo_eje_y.get()}")
+        # self.dat_chart= FigureCanvasTkAgg(self.dat_figure,self.graf_frame)
+        # self.dat_chart.draw()
+        # self.toolbar_dat  = NavigationToolbar2Tk(self.dat_chart,self.graf_frame)
+        # self.toolbar_dat.update()
+        # self.dat_chart.get_tk_widget().pack(fill = tk.BOTH,expand=1)
+
+        self.actualizar_grafica()
 
         self.dat_tv["column"] = list(self.df_datos.columns.values)
         self.dat_tv["show"] = "headings"
@@ -407,8 +412,7 @@ class programa(tk.Tk):
             self.dat_tv.heading(column, text= column)
 
         df_rows = self.df_datos.to_numpy().tolist()
-        
-     
+
         for row in df_rows:
             self.dat_tv.insert("","end",values = tuple(row))
     
@@ -426,7 +430,25 @@ class programa(tk.Tk):
         except FileNotFoundError:
             tk.messagebox.showerror("ERROR","No existen la carpeta con los experimentos")
         
-        
+    def actualizar_grafica(self):
+        if len(self.graf_lf.winfo_children())>=1:
+            for widget in self.graf_frame.winfo_children():
+                widget.destroy()
+
+        self.dat_figure = plt.figure(figsize=(6,4),dpi = 100)
+        self.dat_figure.add_subplot(111)
+        plt.plot(self.df_datos[self.combo_eje_x.get()],self.df_datos[self.combo_eje_y.get()])
+        plt.grid()
+        plt.title(f"Gráfica de {self.combo_eje_y.get()} con respecto {self.combo_eje_x.get()}")
+        plt.xlabel(f"{self.combo_eje_x.get()}")
+        plt.ylabel(f"{self.combo_eje_y.get()}")
+        self.dat_chart= FigureCanvasTkAgg(self.dat_figure,self.graf_frame)
+        self.dat_chart.draw()
+        self.toolbar_dat  = NavigationToolbar2Tk(self.dat_chart,self.graf_frame)
+        self.toolbar_dat.update()
+        self.dat_chart.get_tk_widget().pack(fill = tk.BOTH,expand=1)
+                    
+
         
         
         
