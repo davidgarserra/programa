@@ -158,7 +158,7 @@ class programa(tk.Tk):
         
         #TreeFrame 
         
-        self.tree_frame = tk.Frame(self.tabs["Iniciación"],bg ="red")
+        self.tree_frame = tk.LabelFrame(self.tabs["Iniciación"],text = "Datos de Iniciación")
         self.tree_frame.place(relx =0.51,rely =0.27,relwidth=0.475,relheight=0.7)
         
         self.tree_scrollbarx = ttk.Scrollbar(self.tree_frame,orient =tk.HORIZONTAL)
@@ -166,12 +166,14 @@ class programa(tk.Tk):
     
         self.tree_view =ttk.Treeview(self.tree_frame,xscrollcommand = self.tree_scrollbarx.set,yscrollcommand =self.tree_scrollbary.set)
         
+        self.tree_scrollbarx.pack(side= tk.BOTTOM,fill =tk.X)
+        self.tree_scrollbary.pack(side= tk.RIGHT,fill =tk.Y)
         self.tree_scrollbarx.config(command =self.tree_view.xview)
         self.tree_scrollbary.config(command =self.tree_view.yview)
         
         
         #CHART
-        self.canvas_chart = tk.Frame(self.tabs["Iniciación"],width = 720,height = 550,bg="grey", relief="sunken",borderwidth=3)
+        self.canvas_chart = tk.LabelFrame(self.tabs["Iniciación"],text = "gráfica de Iniciación")
         self.canvas_chart.place(relx =0.01,rely =0.27,relwidth=0.475,relheight=0.7)
         
         ### Pestaña Datos 
@@ -185,22 +187,13 @@ class programa(tk.Tk):
         self.combo_exp.bind("<<ComboboxSelected>>",self.sel_exp) 
         self.combo_exp.grid(column = 0, row =0,padx = 5, pady = 5)
         
-        
-       
-        
         #Label frame acabado 
         self.acabado_lf =ttk.Labelframe(self.dat_exp_lf,text = "Tipo de acabado")
         self.acabado_lf.grid(column = 1, row =0,padx = 5, pady = 5)
         
-        #RadioButtons de acabado 
-        
+        #RadioButtons de acabado    
         self.acabado_RB = {}
-        
-        
         self.acabado_var.set("Sin Acabado")
-        
-        
-
         
         for a in self.acabados: 
             self.acabado_RB[a]=ttk.Radiobutton(self.acabado_lf,text=a,variable =self.acabado_var, value =a,command=self.sel_acabado)
@@ -215,9 +208,40 @@ class programa(tk.Tk):
         self.graf_lf = ttk.Labelframe(self.tabs["Datos"],text = "Gráficas")
         self.graf_lf.place(relx = 0.01, rely =0.22,relheight=0.75,relwidth= 0.48)
 
+        self.graf_frame =tk.Frame(self.graf_lf)
+        self.graf_frame.place(x = 5,rely = 0.16, relheight=0.83,relwidth =0.98)
+
+        self.graf_opt_frame = tk.Frame(self.graf_lf,)
+        self.graf_opt_frame.place(x = 5, y = 5, relwidth =0.98,relheight=0.15)
+
+        self.combo_eje_x = ttk.Combobox(self.graf_opt_frame,width =40)
+        self.combo_eje_y = ttk.Combobox(self.graf_opt_frame,width =40)
+        self.combo_eje_x.grid(column =1, row=0, pady = 5, padx = 5)
+        self.combo_eje_y.grid(column =1, row=1, pady = 5, padx = 5)
+
+        self.label_eje_x = ttk.Label(self.graf_opt_frame ,text = "Eje X")
+        self.label_eje_y =ttk.Label(self.graf_opt_frame ,text = "Eje Y")
+        self.label_eje_x.grid(column =0, row =0, padx = 5)
+        self.label_eje_y.grid(column =0, row = 1, padx = 5, pady =5)
+
+        self.btn_graf =ttk. Button(self.graf_opt_frame,text = "Graficar")
+        self.btn_graf.grid(column = 2, row = 0, rowspan= 2, padx = 5, pady = 5)
+
+
+
         # Label Frame Treeview
         self.dat_tree_lf = ttk.Labelframe(self.tabs["Datos"],text = "Datos")
         self.dat_tree_lf.place(relx = 0.5, rely =0.22,relheight=0.75,relwidth= 0.48)
+
+        self.dat_scrollbarx = ttk.Scrollbar(self.dat_tree_lf,orient=tk.HORIZONTAL)
+        self.dat_scrollbary = ttk.Scrollbar(self.dat_tree_lf,orient=tk.VERTICAL)
+
+        self.dat_tv =ttk.Treeview(self.dat_tree_lf,xscrollcommand = self.dat_scrollbarx.set,yscrollcommand =self.dat_scrollbary.set)
+        
+        self.dat_scrollbarx.config(command =self.dat_tv.xview)
+        self.dat_scrollbary.config(command =self.dat_tv.yview)
+        self.dat_scrollbarx.pack(side= tk.BOTTOM,fill =tk.X)
+        self.dat_scrollbary.pack(side= tk.RIGHT,fill =tk.Y)
 
         
         
@@ -335,8 +359,7 @@ class programa(tk.Tk):
         for row in df_rows:
             self.tree_view.insert("","end",values = tuple(row))
     
-        self.tree_scrollbarx.pack(side= tk.BOTTOM,fill =tk.X)
-        self.tree_scrollbary.pack(side= tk.RIGHT,fill =tk.Y)
+        
         self.tree_view.pack(fill =tk.BOTH, expand=1)
 
     def carga_datos(self):
@@ -353,13 +376,14 @@ class programa(tk.Tk):
      
     def sel_exp(self,event):
         if len(self.graf_lf.winfo_children())>=1:
-            for widget in self.graf_lf.winfo_children():
+            for widget in self.graf_frame.winfo_children():
                 widget.destroy()
                 
 
         self.file_path = os.path.join(self.exp_files_path,self.combo_exp.get())
         self.df_datos = pd.read_table(self.file_path,sep="\s+")
         self.df_datos.Y = -self.df_datos.Y*1e-3-0.1
+        self.df_datos = self.df_datos.drop(r"%X",axis=1)
         
         self.dat_figure = plt.figure(figsize=(6,4),dpi = 100)
         self.dat_figure.add_subplot(111)
@@ -368,13 +392,31 @@ class programa(tk.Tk):
         plt.title(f"Tensión con la profundidad")
         plt.xlabel("profundidad")
         plt.ylabel("$\sigma (MPa)$")
-        self.dat_chart= FigureCanvasTkAgg(self.dat_figure,self.graf_lf)
+        self.dat_chart= FigureCanvasTkAgg(self.dat_figure,self.graf_frame)
         self.dat_chart.draw()
-        self.toolbar_dat  = NavigationToolbar2Tk(self.dat_chart,self.graf_lf)
+        self.toolbar_dat  = NavigationToolbar2Tk(self.dat_chart,self.graf_frame)
         self.toolbar_dat.update()
-        self.dat_chart.get_tk_widget().pack(side = tk.TOP,padx =5,pady =5,fill= tk.BOTH,expand = 1)
+        self.dat_chart.get_tk_widget().pack(fill = tk.BOTH,expand=1)
         
+        self.dat_tv.delete(*self.dat_tv.get_children())
+
+        self.dat_tv["column"] = list(self.df_datos.columns.values)
+        self.dat_tv["show"] = "headings"
+
+        for column in self.dat_tv["column"] :
+            self.dat_tv.heading(column, text= column)
+
+        df_rows = self.df_datos.to_numpy().tolist()
         
+     
+        for row in df_rows:
+            self.dat_tv.insert("","end",values = tuple(row))
+    
+        
+        self.dat_tv.pack(fill =tk.BOTH, expand=1,padx = 5, pady = 5)
+
+
+
     def sel_acabado(self):
         try:
             self.subdir_exp = self.acabado_var.get()
