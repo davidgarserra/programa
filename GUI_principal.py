@@ -11,6 +11,7 @@ from propagacion_b import MAT
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg,NavigationToolbar2Tk
 import pandas as pd
+import re
 
 class programa(tk.Tk):
     def __init__(self):
@@ -50,6 +51,7 @@ class programa(tk.Tk):
                             self.acabados[2]:"shot_peening",
                             self.acabados[1]:"electroerosion"}
         self.acabado_var = tk.StringVar()
+        self.lista_exp =[]  #Lista de experimentos sin especificar traccion o compresion
         self.df_datos =pd.DataFrame()
 
         for prop in self.props:
@@ -61,7 +63,8 @@ class programa(tk.Tk):
         self.menu = tk.Menu(self)
         self.file_menu = tk.Menu(self.menu, tearoff=0)
         self.file_menu.add_command(label="Nuevo")
-        self.file_menu.add_command(label="Abrir",command=self.carga_datos)
+        self.file_menu.add_command(label="Abrir datos experimentales",command=self.carga_datos)
+        self.file_menu.add_command(label="Abrir resultados de iniciación",command=self.abrir_resultados_iniciacion)
         self.file_menu.add_separator()
         self.file_menu.add_command(label="Guardar")
         self.file_menu.add_command(label="Guardar como...")
@@ -71,7 +74,7 @@ class programa(tk.Tk):
         self.config(menu=self.menu)
 
         #Pestañas 
-        self.pestanas = ["Material","Iniciación","Datos","Comparación"]
+        self.pestanas = ["Material","Iniciación","Datos","Cálculo"]
         self.tabControl = ttk.Notebook(self)
         self.tabs ={}
         for pestana in self.pestanas:
@@ -243,9 +246,39 @@ class programa(tk.Tk):
         self.dat_scrollbarx.pack(side= tk.BOTTOM,fill =tk.X)
         self.dat_scrollbary.pack(side= tk.RIGHT,fill =tk.Y)
 
+        ### Pestaña Cálculo 
+
+        self.ejec_lf = ttk.Frame(self.tabs["Cálculo"],relief = tk.GROOVE)
+        self.ejec_lf.place(x = 10, y = 10,relheight = 0.15,relwidth =0.48)
+
+        ## ejecucion 
+        self.combo_ejec = ttk.Combobox(self.ejec_lf,width = 50)
+        self.combo_ejec.grid(column = 0, row = 0,padx =25,pady =25,sticky=tk.W)
+
+        self.btn_ejec = ttk.Button(self.ejec_lf,text = "Ejecutar")
+        self.btn_ejec.grid(column = 1, row =0, padx = 5,pady =25,sticky =tk.S)
+
+        ## Resultados
+
+        self.result_ini_lf = tk.LabelFrame(self.tabs["Cálculo"],text = "Resultados")
+        self.result_ini_lf.place(relx = 0.5,y =10,relheight = 0.15,relwidth =0.48)
+
+        self.lbl_lon_ini = ttk.Label(self.result_ini_lf, text = "Longitud de iniciación de la grieta: ",justify =tk.LEFT)
+        self.lbl_lon_ini.pack(padx = 5, pady =5,anchor = tk.W)
+
+        self.lbl_cicl = ttk.Label(self.result_ini_lf, text = "Número de ciclos has el fallo: ",justify =tk.LEFT)
+        self.lbl_cicl.pack(padx = 5, pady =5,anchor = tk.W)
         
+        self.lbl_ubi = ttk.Label(self.result_ini_lf, text = "Resultados guardados en: ",justify =tk.LEFT)
+        self.lbl_ubi.pack(padx = 5, pady =5,anchor = tk.W)
+
         
-        
+        self.graf_ini_lf = tk.LabelFrame(self.tabs["Cálculo"],text = "Gráfica de iniciación")
+        self.graf_ini_lf.place(x =10 ,rely =0.18,relheight = 0.8,relwidth =0.48)
+
+        self.graf_cicl_lf = tk.LabelFrame(self.tabs["Cálculo"],text = "Gráfica de iniciación")
+        self.graf_cicl_lf.place(relx=0.5 ,rely =0.18,relheight = 0.8,relwidth =0.48)
+
         # self.mostrar_info()
         
         ### Funciones
@@ -337,8 +370,10 @@ class programa(tk.Tk):
     def cargar_csv(self):
         
         try: 
-            self.filename ="curvas_inic/MAT_{}.csv".format(self.par)
-            self.df  =pd.read_csv(self.filename,sep="\t").dropna(axis =1)
+            # self.filename ="curvas_inic/MAT_{}.csv".format(self.par)
+            # self.df  =pd.read_csv(self.filename,sep="\t").dropna(axis =1)
+            self.filename ="curvas_inic/MAT_{}.dat".format(self.par)
+            self.df  =pd.read_table(self.filename,sep="\s+")
         
         except ValueError:
             print("NO existe el archivo")
@@ -370,14 +405,13 @@ class programa(tk.Tk):
             self.exp_files_path = os.path.join(self.dir_exp,self.dict_acabados[self.subdir_exp])
             self.files_exp = os.listdir(path=self.exp_files_path)
             self.combo_exp.config(value= self.files_exp)
+            
         except FileNotFoundError:
             tk.messagebox.showerror("ERROR","En esta ruta no se encuentran las carpetas con los experimentos. Selecciona otra carpeta")
-            
+        self.nombre_experimentos()
      
     def sel_exp(self,event):
-        # if len(self.graf_lf.winfo_children())>=1:
-        #     for widget in self.graf_frame.winfo_children():
-        #         widget.destroy()
+        
         self.file_path = os.path.join(self.exp_files_path,self.combo_exp.get())
         self.df_datos = pd.read_table(self.file_path,sep="\s+")
         self.df_datos.Y = -self.df_datos.Y*1e-3-0.1
@@ -389,19 +423,6 @@ class programa(tk.Tk):
         self.combo_eje_y.config(value=list(self.df_datos.columns.values))
         self.combo_eje_x.set("Y")
         self.combo_eje_y.set("s_xx")
-
-        # self.dat_figure = plt.figure(figsize=(6,4),dpi = 100)
-        # self.dat_figure.add_subplot(111)
-        # plt.plot(self.df_datos[self.combo_eje_x.get()],self.df_datos[self.combo_eje_y.get()])
-        # plt.grid()
-        # plt.title(f"Gráfica de {self.combo_eje_y.get()} con respecto {self.combo_eje_x.get()}")
-        # plt.xlabel(f"{self.combo_eje_x.get()}")
-        # plt.ylabel(f"{self.combo_eje_y.get()}")
-        # self.dat_chart= FigureCanvasTkAgg(self.dat_figure,self.graf_frame)
-        # self.dat_chart.draw()
-        # self.toolbar_dat  = NavigationToolbar2Tk(self.dat_chart,self.graf_frame)
-        # self.toolbar_dat.update()
-        # self.dat_chart.get_tk_widget().pack(fill = tk.BOTH,expand=1)
 
         self.actualizar_grafica()
 
@@ -427,9 +448,11 @@ class programa(tk.Tk):
             self.exp_files_path = os.path.join(self.dir_exp,self.dict_acabados[self.subdir_exp])
             self.files_exp = os.listdir(path=self.exp_files_path)
             self.combo_exp.config(value= self.files_exp)
+            
         except FileNotFoundError:
             tk.messagebox.showerror("ERROR","No existen la carpeta con los experimentos")
-        
+        self.nombre_experimentos()
+
     def actualizar_grafica(self):
         if len(self.graf_lf.winfo_children())>=1:
             for widget in self.graf_frame.winfo_children():
@@ -447,6 +470,45 @@ class programa(tk.Tk):
         self.toolbar_dat  = NavigationToolbar2Tk(self.dat_chart,self.graf_frame)
         self.toolbar_dat.update()
         self.dat_chart.get_tk_widget().pack(fill = tk.BOTH,expand=1)
+
+    def abrir_resultados_iniciacion(self):
+        self.tree_view.delete(*self.tree_view.get_children())
+        try: 
+            self.filename =tk.filedialog.askopenfilename(initialdir="curvas_inic/",title="Abrir archivo de iniciación",filetypes=(("archivo DAT","*.dat"),("archivo csv","*.csv"),("Todos los archivos","*.*")))
+            self.df  =pd.read_table(self.filename,sep="\s+")
+        
+        except ValueError:
+            print("NO existe el archivo")
+        except FileNotFoundError:
+            print("NO existe el archivo")
+
+        
+
+        self.tree_view["column"] = list(self.df.columns.values)
+        self.tree_view["show"] = "headings"
+
+        for column in self.tree_view["column"] :
+            self.tree_view.heading(str(column), text= str(column))
+        df_rows = self.df.to_numpy().tolist()
+        
+        for row in df_rows:
+            self.tree_view.insert("","end",values = tuple(row))
+    
+        self.tree_view.pack(fill =tk.BOTH, expand=1)
+
+    def nombre_experimentos(self):
+        pattern = r"\d+_\d+_\d+"
+        self.lista_exp =[]
+        for f in self.files_exp: 
+            
+            self.lista_exp.append(re.search(pattern,f).group())
+
+        self.lista_exp =list(dict.fromkeys(self.lista_exp))
+        self.combo_ejec.config(value =self.lista_exp)
+        
+        
+       
+
                     
 
         
