@@ -15,6 +15,7 @@ from scipy.interpolate import interp2d, interp1d
 from propagacion_b import fase_propagacion,MAT
 import pandas as pd
 from time import time
+import re
 
 def lectura_datos(ruta, exp_max, exp_min):
     
@@ -185,33 +186,43 @@ def parametro(par, MAT, x, s_max, e_max, e_min):
 ###############################################################################
 ###############################################################################
 
-def principal(par, W, MAT, exp_max, exp_min):
+def principal(par, W, MAT,ac,trat,exp_max, exp_min):
     """Estima la vida a fatiga.
     
     INPUTS:  par     = parametro para el modelo de iniciacion
              W       = (m) anchura del especimen        
              MAT     = indice asignado al material
+             ac      = propagacion plana o eliptica
+             trat    = tratamiento superficial
              exp_max = nombre del archivo con la tensiones y defs maximas
              exp_min = nombre del archivo con la tensiones y defs minimas
             
     OUTPUTS: resultados.dat = actualiza el archivo de resultados con la
              longitud de iniciacion y los ciclos de iniciacion, propagacion y 
              total para que se produzca el fallo
+             a_inic         = longitud de grieta de iniciación
+             v_ai_mm        = vector de longitudes de grietas en mm 
+             N_t_min        = Ciclos de iniciación
+             N_t            = Vector de ciclos totales
+             N_p            = Vector de ciclos de propagación   
+             N_i            = Vector de ciclos de iniciación
+             N_a            = Vector de ciclos de propagación a partir de la iniciación
              exp_id.dat     = archivo con los datos de las curvas de vida"""
+
              
     print('Datos Experimentales:\n    {}.dat\n    {}.dat\n'.format(exp_max,
                                                                    exp_min))
     #exp_id obtiene a partir del nombre del archivo con los datos un
     #identificador del experimento. Dependiendo del nombre del archivo debe
     #modificarse.
-    exp_id      = exp_max[16:]
+    pattern =r"\d+_\d+_\d+"
+    exp_id      = re.search(pattern,exp_max).group()
 
     #Obtenemos las rutas a las carpetas necesarias para los calculos 
     cwd         = os.getcwd()
-    ruta_exp    = cwd + '/datos_exp'
-    ruta_curvas = cwd + '/curvas_inic'
-    ruta_fig    = cwd + '/resultados/grafs/' + par
-    ruta_datos  = cwd + '/resultados/datos/' + par
+    ruta_exp    = cwd + '/datos_experimentales/{}'.format(trat)
+    ruta_curvas = cwd + '/curvas_inic/{}'.format(ac)
+    ruta_datos  = cwd + '/resultados/{}/datos/{}'.format(trat,par)
              
     #Cargamos los datos de las curvas de iniciación del material
     data_interp = np.loadtxt("{}/MAT_{}.dat".format(ruta_curvas, par))  
@@ -262,23 +273,11 @@ def principal(par, W, MAT, exp_max, exp_min):
             N_i[i] = 0
         
         #Calculamos los ciclos de propagacion
-        N_p[i] = fase_propagacion(sxx_max, ind_a, a, da, W, MAT) 
+        N_p[i] = fase_propagacion(sxx_max, ind_a, a,ac, da, W, MAT) 
         
         #Ciclos totales
         N_t[i] = N_i[i]+N_p[i]
         
-    #Pintamos los curvas de iniciación, de propagación y totales
-    # plt.close(exp_id + '_' + par)
-    # plt.figure(exp_id + '_' + par)
-    # plt.yscale('log')
-    # plt.xlabel('Longitud de iniciacion (mm)')
-    # plt.ylabel('Ciclos')
-    # plot_inic  = []
-    # plot_prop  = []    
-    # plot_tot   = []
-    # plot_inic += plt.plot(v_ai_mm, N_i, 'b')
-    # plot_prop += plt.plot(v_ai_mm, N_p, 'k')
-    # plot_tot  += plt.plot(v_ai_mm, N_t, 'r')
     
     #Calculamos el numero de ciclos hasta el fallo y la longitud de iniciación
     #de la grieta, que se producen en el mínimo de la curva de ciclos totales
@@ -288,17 +287,6 @@ def principal(par, W, MAT, exp_max, exp_min):
     N_p_min   = N_p[i_N_t_min]
     a_inic    = v_ai_mm[i_N_t_min]
     
-    #Pintamos el punto donde se da el minimo
-    # plt.plot(a_inic, N_t_min, 'ro')
-    # plt.ylim([1e3,1e8])
-    # plt.xlim([0.0,a_i_max*1e3])
-    # plt.legend([plot_inic[0], plot_prop[0], plot_tot[0]],
-    #            ['Vida de iniciacion', 'Vida de propagacion', 'Vida total'],
-    #            loc = 0)
-    # #Guardamos la figura y la cerramos
-    # plt.show()
-    # plt.savefig(ruta_fig + '/{}.png'.format(exp_id))
-    # plt.close(exp_id + '_' + par)
 
     #Pintamos la figura con la evolucion de la longitud de grieta y guardamos
     #en un archivo los datos
@@ -326,33 +314,18 @@ def principal(par, W, MAT, exp_max, exp_min):
                      n_i+n_p, n_i, n_p, n_a))            
     ciclos.close()
             
-    # plt.figure('Longitud de grieta')
-    # plt.xscale('log')
-    # plt.xlabel('Ciclos')
-    # plt.ylabel('Longitud de grieta (mm)')
-    # plt.xlim([5e2,1e8])
-    # plt.plot(N_a, v_ai_mm, 'k')
-    # plt.show()
+   
+    lines = np.loadtxt('resultados_generales/resultados_{}.dat'.format(trat), dtype = str, skiprows = 1).tolist()
+    # Se reescriben las lineas que ya estaban en el archivo. EL if else es debido
+    # a que el formato de lines varía según haya una línea de resultados escrita 
+    # o mas de una.
     
-    
-    #represantamos la matriz de ciclos a través de un countour plot 
-    # XX,YY  = np.meshgrid(x_interp,y_interp) # malla de la matriz
-    # breaks = np.logspace(1,10,10)           #intervalos de los niveles
-
-    # fig, ax = plt.subplots()
-    # cs = ax.contourf(XX, YY, m_N_i,breaks, locator=ticker.LogLocator())
-    # fig.colorbar(cs,ticks= breaks)
-    # plt.show()
-    #Generamos/actualizamos el archivo con los resultados para la estimacion
-    lines = np.loadtxt('resultados.dat', dtype = str, skiprows = 1).tolist()
-    
-    results = open('resultados.dat', 'w')
+    results = open('resultados_generales/resultados_{}.dat'.format(trat), 'w')
     results.write('{:<13}\t{:<}\t{:<12}\t{:<12}\t{:<12}\t{:<5}\t{:<5}\t{:<}'.format('exp_id', 
                   'param', 'N_t_min', 'N_i_min', 'N_p_min', '% N_i', '% N_p', 'a_inic (mm)'))
     
-    #Se reescriben las lineas que ya estaban en el archivo. EL if else es debido
-    #a que el formato de lines varía según haya una línea de resultados escrita 
-    #o mas de una.
+
+    
     if len(lines[0][0]) == 1:
         #Solo se escriben los resultados que no pertenezcan al calculo actual
         if lines[0] != exp_id or lines[1] != par:
@@ -378,19 +351,30 @@ def principal(par, W, MAT, exp_max, exp_min):
 
     return a_inic,v_ai_mm, N_t_min,N_t,N_p, N_i, N_a
     
-def pintar_grafica_a_N(N_a, v_ai_mm):
-    
-    plt.figure('Longitud de grieta')
+def pintar_grafica_a_N(N_a, v_ai_mm,par,exp_id):
+    fig = plt.figure('Longitud de grieta_{}_{}'.format(par,exp_id))
     plt.xscale('log')
     plt.xlabel('Ciclos')
     plt.ylabel('Longitud de grieta (mm)')
     plt.xlim([5e2,1e6])
     plt.grid()
     plt.plot(N_a, v_ai_mm, 'k')
-    plt.show()
+    return fig
     
-def pintar_grafica_iniciacion(a_inic,v_ai_mm, N_t_min,N_t,N_p, N_i, N_a,par, exp_id ):
-    plt.figure(f"{exp_id}_{par}")
+def pintar_grafica_a_N_todas(N_a, v_ai_mm):
+    fig = plt.figure('Longitud de grieta')
+    plt.xscale('log')
+    plt.xlabel('Ciclos')
+    plt.ylabel('Longitud de grieta (mm)')
+    plt.xlim([5e2,1e6])
+    plt.grid()
+    plt.plot(N_a, v_ai_mm, "k")
+    
+    return fig
+    
+def pintar_grafica_iniciacion(a_inic,v_ai_mm, N_t_min,N_t,N_p, N_i,par,trat, exp_id ):
+    
+    fig = plt.figure(f"{exp_id}_{par}")
     plt.title("Punto de Iniciación")
     plt.xlabel('Longitud de iniciacion (mm)')
     plt.ylabel('Ciclos')
@@ -401,15 +385,14 @@ def pintar_grafica_iniciacion(a_inic,v_ai_mm, N_t_min,N_t,N_p, N_i, N_a,par, exp
     plt.plot(v_ai_mm, N_t, 'r')
     plt.plot(a_inic, N_t_min, 'g^')
     plt.ylim([1e3,1e8])
-    plt.legend(["Iniciación","Propagación" , "Total","Punto de iniciación"],
-              loc = 0)
-    plt.annotate(s="a_inic: {}\nN_inic: {}".format(a_inic,np.floor(N_t_min)),
+    plt.legend(["Iniciación","Propagación" , "Total","Punto de iniciación"])
+    plt.annotate(s="a_inic: {:.3f} mm\nN_inic: {:.0f}".format(a_inic,np.floor(N_t_min)),
                 xy =(a_inic,N_t_min),
                 xytext =(1,1e7), 
                 arrowprops=dict(facecolor ="blue",width=0.1,headwidth =0.2))
-    plt.savefig("resultados/grafs/{}/{}.png".format(par,exp_id))
-    plt.show()
-    plt.close(f"{exp_id}_{par}")
+    plt.savefig("resultados/{}/grafs/{}/{}.png".format(trat,par,exp_id))
+    return fig
+    
 
    
 ###############################################################################
@@ -419,8 +402,8 @@ if __name__ == "__main__":
 
     par  = 'SWT'
     W     = 10e-3
-    tracc = 'TENSOR_TRACCION_'
-    comp  = 'TENSOR_COMPRESION_'
+    tracc = 'TENSOR_TRAC_'
+    comp  = 'TENSOR_COMP_'
     exp   = ['6629_971_70', '5429_971_110',
              '5429_1257_110', '4217_1543_110',
              '5429_1543_110', '3006_971_150',
@@ -433,15 +416,18 @@ if __name__ == "__main__":
              '4217_1543_175', '5429_1543_175',
              '3006_2113_175', '4217_2113_175', '5429_2113_175']
              
-    exp =['4217_1543_175']
+    exp =['3006_2113_175']
     t0 = time()
+    ac ="eliptica"
+    trat ="shot_peening"
+    ruta_exp ="datos_exp"
     # pintar_grafica_a_N()
     for i in exp:
         exp_max = tracc + i
         exp_min = comp + i
-        a_inic,v_ai_mm, N_t_min,N_t,N_p, N_i, N_a=principal(par, W,MAT, exp_max, exp_min)
-        pintar_grafica_a_N(N_a, v_ai_mm)
-        pintar_grafica_iniciacion(a_inic,v_ai_mm, N_t_min,N_t,N_p, N_i, N_a,par, i)
-    # plt.show()
+        a_inic,v_ai_mm, N_t_min,N_t,N_p, N_i, N_a=principal(par, W,MAT,ac,trat, exp_max, exp_min)
+        # pintar_grafica_a_N(N_a, v_ai_mm)
+        fig =pintar_grafica_iniciacion(a_inic,v_ai_mm, N_t_min,N_t,N_p, N_i,par,trat, i)
+    fig.show()
     tf = time()
     print(f"Tiempo empleado {tf-t0}")

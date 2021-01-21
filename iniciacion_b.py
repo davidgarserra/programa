@@ -56,7 +56,7 @@ def ciclos_totales(param, crit, MAT):
 ###############################################################################
 ###############################################################################
 
-def fase_iniciacion(param, sigma, crit, a_i, da, W, MAT):
+def fase_iniciacion(param, sigma, crit, a_i,ac, da, W, MAT):
     """Devuelve los ciclos de la fase de iniciacion de una grieta, conocida
     la tension media desde la superficie hasta la punta de la misma.
     
@@ -64,6 +64,7 @@ def fase_iniciacion(param, sigma, crit, a_i, da, W, MAT):
             sigma = tension x en ese punto
             crit  = parametro a utilizar
             a_i   = (m) tamaño de la grieta de iniciacion
+            ac    = plana o eliptica (0 o 0.5)
             da    = paso para realizar los calculos 
             W     = (m) anchura del especimen
             MAT   = indice asignado del material
@@ -79,7 +80,7 @@ def fase_iniciacion(param, sigma, crit, a_i, da, W, MAT):
     ind_a = 0
     
     #Calculos los ciclos que necesita la grieta para propagarse
-    N_p = fase_propagacion(sigma, ind_a, a_i, da, W, MAT)
+    N_p = fase_propagacion(sigma, ind_a, a_i,ac, da, W, MAT)
     
     #Calculamos los ciclos de iniciacion
     N_i = N_t - N_p
@@ -98,11 +99,12 @@ def fase_iniciacion(param, sigma, crit, a_i, da, W, MAT):
 ###############################################################################
 ############################################################################### 
     
-def curvas_iniciacion(par, da, W, MAT):
+def curvas_iniciacion(par, da,ac, W, MAT):
     """Escribe un archivo de texto con las curvas de
     iniciación para distintas longitudes de grieta para un material.
     
     INPUT:   par   = parametro para el modelo de iniciacion
+             ac      =plana o eliptica (0 o 0.5)
              da    = paso para realizar los calculos 
              W     = (m) anchura del especimen
              MAT   = indice asignado al material
@@ -117,16 +119,16 @@ def curvas_iniciacion(par, da, W, MAT):
     #escribimos la cabecera del mismo y creamos los vectores con las tensiones
     #y los tamaños de grieta para crear las curvas de iniciación
     cwd      = os.getcwd()
-    ruta     = cwd + '/curvas_inic'
-    ruta_fig = cwd + '/grafs'
+    ruta     = cwd + '/curvas_inic/{}/'.format(ac)
+    ruta_fig = cwd + '/grafs/{}/'.format(ac)
     if(os.path.isdir(ruta_fig)):
         pass
     else:
         os.mkdir(ruta_fig)
 
-    archivo  = open('{}/MAT_{}.csv'.format(ruta, par), 'w')
+    archivo  = open('{}/MAT_{}.dat'.format(ruta, par), 'w')
         
-    archivo.write('{:.3e}\t'.format(0.0000))
+    archivo.write('{:.3e} '.format(0.0000))
     
     v_sigma     = []       #Vector de tensiones
     v_param     = []       #Vector de Fatemi-Socie o Smith-Watson-Topper
@@ -152,24 +154,24 @@ def curvas_iniciacion(par, da, W, MAT):
     v_gamma = v_sigma/2/G 
     v_param = v_gamma*(1.0+k*v_sigma/2.0/sigma_y) if par =='FS' else v_sigma*v_def
                                     
-    n_a   = 10        #Número de curvas de iniciacion por material
+    n_a   = 100        #Número de curvas de iniciacion por material
     a_min = 5e-5           #Tamaño más pequeño grieta
-    ex    = 1.45		   #Variable para controlar como crece la diferencia
+    ex    = 1.2		   #Variable para controlar como crece la diferencia
     					   #entre longitudes de grieta
        
     v_a = [a_min*(i+1.0)**ex for i in range(n_a)] #Vector de tamaños de grietas
     for a in v_a:
-        archivo.write('{:.3e}\t'.format(a))
+        archivo.write('{:.3e} '.format(a))
 
     N_i = np.zeros((n_sigma,n_a)) #inicializamos la matriz de ciclos de iniciación
 
     # proceso = 0.0
     t1 = time.time()
     for i in range(len(v_param)):
-        archivo.write('\n{:.3e}\t'.format(v_param[i]))
+        archivo.write('\n{:.3e} '.format(v_param[i]))
         for j,a in enumerate(v_a):
-            N_i[i,j]  = fase_iniciacion(v_param[i], v_sigma[i], par, a, da, W, MAT)
-            archivo.write('{:.3e}\t'.format(N_i[i,j]))
+            N_i[i,j]  = fase_iniciacion(v_param[i], v_sigma[i], par, a,ac, da, W, MAT)
+            archivo.write('{:.3e} '.format(N_i[i,j]))
         #Pintamos en la consola el porcentaje realizado
         print('\r{:.2%} completado'.format((i+1.0)/len(v_param)), end = '')
         # proceso =(i+1.0)/len(v_param)
@@ -182,19 +184,17 @@ def curvas_iniciacion(par, da, W, MAT):
     
     #Pintamos las curvas de iniciación
     
-    # plt.figure()
-    # for i in range(n_a):
-    #     plt.plot(N_i[:,i],v_sigma)
-    # plt.grid()
-    # plt.title(f"Curvas de iniciación para el parámetro {par}")
-    # plt.xscale("log")
-    # plt.xlabel("Ciclos")
-    # plt.ylabel("$\sigma (MPa)$")
+    plt.figure()
+    for i in range(n_a):
+        plt.plot(N_i[:,i],v_sigma)
+    plt.grid()
+    plt.title(f"Curvas de iniciación para el parámetro {par}")
+    plt.xscale("log")
+    plt.xlabel("Ciclos")
+    plt.ylabel("$\sigma (MPa)$")
 
-    # # #Guardamos la figura y la cerramos
-    # plt.savefig(ruta_fig+f'/curvas_inic_{par}.png')
-    # plt.show()
-    # plt.close(1)
+    # #Guardamos la figura y la cerramos
+    plt.savefig(ruta_fig+f'curvas_inic_{par}.png')
 
     return N_i,n_a,v_sigma
 
@@ -215,9 +215,12 @@ def plot_N_i(par,N_i,v_sigma,n_a):
 ###############################################################################    
 
 if __name__ == "__main__":
+    pars =["SWT","FS"]
+    acs =["plana","eliptica"]
     
-    par = "SWT"
-    N_i,n_a,v_sigma =curvas_iniciacion(par = par, da=1e-5, W = 10e-3, MAT=MAT)
+    for par in pars:
+        for ac in acs:
+            N_i,n_a,v_sigma =curvas_iniciacion(par = par, da=1e-5,ac=ac, W = 10e-3, MAT=MAT)
     
     
     

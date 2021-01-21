@@ -13,8 +13,8 @@ MAT = {"C"     :8.83e-11,
     "n"        : 3.322,
     "f"        : 2.5,
     "l_0"      : 25e-6,
-    "sigma_fl" : 2.2,
-    "K_th"     : 169.0,
+    "sigma_fl" : 169.0,
+    "K_th"     : 2.2,
     "K_IC"     : 29.0,
     "sigma_y"  : 503.0,
     "sigma_f"  : 1610.0,
@@ -175,7 +175,7 @@ def Phi(ac = 0.5):
 ###############################################################################
 ###############################################################################
 
-def fase_propagacion(sigma, ind_a, a_i, da, W, MAT):
+def fase_propagacion(sigma, ind_a, a_i, ac,da, W, MAT):
     """Devuelve los ciclos de propagacion de la grieta.
     
     INPUTS: sigma    = (MPa) tensión maxima perpendicular al plano de la grieta
@@ -183,6 +183,7 @@ def fase_propagacion(sigma, ind_a, a_i, da, W, MAT):
                        (list)  --> fase de propagación       
             ind_a   = indice asociado a la longitud de grieta
             a_i     = (m) longitud inicial de la grieta
+            ac      = plana o eliptica (0 o 0.5)
             da      = (m) paso de longitudes de grietas
             W       = (m) anchura del especimen
             MAT     = indice asignado al material
@@ -199,6 +200,7 @@ def fase_propagacion(sigma, ind_a, a_i, da, W, MAT):
     K_th = MAT["K_th"]
     a_0  = MAT["a_0"]
     K_IC = MAT["K_IC"]
+    
 
     def integr_prop(x, s, ac):
         """Realiza el cálculo de la integral de los ciclos de propagación"""
@@ -214,7 +216,13 @@ def fase_propagacion(sigma, ind_a, a_i, da, W, MAT):
         return ki, res            
     
     #Si sigma es de tipo float, el cálculo es para la fase de iniciación
-    ac  = 0.5
+    # ac  = 0.5
+
+    if ac == "plana":
+        ac = 0.0
+    elif ac == "eliptica":
+        ac =0.5
+    
     N_p = 0.0
     a   = a_i 
     ki  = 0.0
