@@ -1,14 +1,17 @@
+# -*- coding: utf-8 -*-
 """
+Created on :
 
 @author: David García Serrano
 """
+
 import os
 import  tkinter as tk
 from tkinter import ttk
 import numpy as np
-from iniciacion_b import curvas_iniciacion
-from propagacion_b import MAT
-from principal_bb import principal,pintar_grafica_a_N_todas,pintar_grafica_iniciacion
+from iniciacion import curvas_iniciacion
+from propagacion import MAT
+from principal import principal,pintar_grafica_a_N_todas,pintar_grafica_iniciacion
 from estadistica import*
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg,NavigationToolbar2Tk
@@ -20,9 +23,9 @@ class programa(tk.Tk):
         super().__init__()
         self.title("Cálculo de Fatiga")
         self.state("zoomed")
-        
         self.geometry("800x600+10+10")
-        
+        self.iconbitmap("icon.ico")
+        self.protocol("WM_DELETE_WINDOW", self.preguntar_salir)
 
         ### variables 
         self.props = ["C","n","f","l_0","K_th","sigma_fl","a_0","K_IC","sigma_y","sigma_f","E","nu","b","G"]
@@ -68,15 +71,14 @@ class programa(tk.Tk):
         ### Menu
         self.menu = tk.Menu(self)
         self.file_menu = tk.Menu(self.menu, tearoff=0)
-        self.file_menu.add_command(label="Nuevo")
+        self.file_menu.add_command(label="Nuevo",command= self.abrir_nuevo)
         self.file_menu.add_command(label="Abrir datos experimentales",command=self.carga_datos)
         self.file_menu.add_command(label="Abrir resultados de iniciación",command=self.abrir_resultados_iniciacion)
         self.file_menu.add_separator()
-        self.file_menu.add_command(label="Guardar")
-        self.file_menu.add_command(label="Guardar como...")
+        self.file_menu.add_command(label="Salir", command=self.preguntar_salir)
         self.menu.add_cascade(label="Archivo", menu=self.file_menu)
         self.menu.add_command(label="Acerca de",command =self.mostrar_info)
-        self.menu.add_command(label="Salir", command=self.destroy)
+        
         self.config(menu=self.menu)
 
         #Pestañas 
@@ -324,15 +326,7 @@ class programa(tk.Tk):
         self.btn_ejecuta_graficas= ttk.Button(self.carga_graf_lf,text ="Ejecutar gráficas",width=60,command = self.ejecutar_graficas)
         self.btn_ejecuta_graficas.grid(column =0, row =2, padx =5,pady =5,columnspan =2,sticky=tk.W)
 
-
-
-
-
-
-
-
-
-        # self.mostrar_info()
+        self.mostrar_info()
         
         ### Funciones
     def combosel(self,event):
@@ -354,7 +348,7 @@ class programa(tk.Tk):
         self.dict_prop = {}
         for prop in self.props:
             self.resum_label[prop].config(text =prop+": ")
-            self.props_entries[prop].config(fg="black")
+        #     self.props_entries[prop].config(fg="black")
         
 
     def guardar_campos(self,event):
@@ -386,7 +380,12 @@ class programa(tk.Tk):
     def mostrar_info(self):
         """Muestra la información del programa en una alerta.
         """
-        tk.messagebox.showinfo("Información", """Este programa ha sido desarrollado por David García Serrano\npara el Trabajo de Fin de Máster\nAño 2021""")
+        text ="""Este programa ha sido desarrollado por David García Serrano
+                para el Trabajo de Fin de Máster en Ingeniería Aeronáutica. Año 2021.
+                Para dudas acerca del programa consultar el documento del TFM.
+                Se trata de un programa en fase de desarrollo por lo que pueden existir
+                errores de implementación."""
+        tk.messagebox.showinfo("Información", text)
 
     def plot_iniciacion(self):
         if len(self.canvas_chart.winfo_children())>=1:
@@ -637,8 +636,7 @@ class programa(tk.Tk):
         try:
 
             self.par = self.var_param.get()
-            self.fig_reg = plt.figure(figsize=(5,5))
-            regresion(self.par,self.ubi_dat_est,self.ubi_dat_exp)
+            self.fig_reg = regresion(self.par,self.ubi_dat_est,self.ubi_dat_exp)
             self.reg_chart= FigureCanvasTkAgg(self.fig_reg,self.reg_graf_lf)
             self.reg_chart.draw()
             self.reg_TB  = NavigationToolbar2Tk(self.reg_chart,self.reg_graf_lf)
@@ -661,12 +659,19 @@ class programa(tk.Tk):
         except:
             tk.messagebox.showerror("ERROR","Archivo/s no válidos. Asegurese de que se han cargado correctamente los archivos.")
 
-
+    def abrir_nuevo(self):
+        self.destroy()
+        self.__init__()
     
+    def preguntar_salir(self):
+        resp = tk.messagebox.askokcancel("Atención","¿Estás seguro de querer salir?")
+        if resp:
+            self.destroy()
 
 if __name__ =="__main__":
     app = programa() 
     app.mainloop()
+    
 
 
 

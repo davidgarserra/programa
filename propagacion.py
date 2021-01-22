@@ -1,90 +1,30 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Nov 29 13:20:11 2018
+Created on:
 
-@author: Alejandro Quirós
+@author: David García y Alejandro Quirós
 """
 
 
 import numpy as np
 from scipy.integrate import quad
 
-def constantes_material(MAT = 0):
-    """Devuelve las propiedades del material.
-    
-    INPUT:   MAT         = indice asignado al material
-                         = 0 por defecto
-    
-    OUTPUTS: mat_props[C = coeficiente de la ley de crecimiento
-             n           = exponente de la ley de crecimiento
-             f           = parametro en aproximacion al diagrama
-             Kitagawa-Takahashi
-             l_0         = (m) distancia de la superficie a la primera barrera
-             microestructural 
-             K_th        = (MPa m^0.5) umbral de creciemiento de la grieta
-             a_0         = (m) parametro de El Haddad
-             K_IC        = (MPa m^0.5) tenacidad a fractura
-             sigma_y     = (MPa) limite elastico
-             sigma_f     = (MPa) coeficiente de resistencia a fatiga
-             E           = (MPa) modulo de Young
-             nu          = coeficiente de Poisson
-             b           = exponente de resistencia a fatiga
-             G           = (MPa) modulo de cizalladura]"""
-    
-    #Constantes de los materiales
-    C        = []
-    n        = []
-    f        = []
-    l_0      = []
-    sigma_fl = []
-    K_th     = []
-    a_0      = []
-    K_IC     = []
-    sigma_y  = []
-    sigma_f  = []
-    E        = []
-    nu       = []
-    b        = []
-    G        = []
+MAT = {"C"     :8.83e-11,
+    "n"        : 3.322,
+    "f"        : 2.5,
+    "l_0"      : 25e-6,
+    "sigma_fl" : 169.0,
+    "K_th"     : 2.2,
+    "K_IC"     : 29.0,
+    "sigma_y"  : 503.0,
+    "sigma_f"  : 1610.0,
+    "E"        : 71000.0,
+    "nu"       : 0.33,
+    "b"        : -.1553}
+MAT["G"]= MAT["E"]/(2.0*(1.0 + MAT["nu"]))
+MAT["a_0"] =1/np.pi*(MAT["K_th"]/(MAT["sigma_fl"]))**2.0
+   
 
-    #Material 0: Aluminio 7075-T651
-    C.append(8.83e-11)
-    n.append(3.322)
-    f.append(2.5)
-    l_0.append(25e-6)
-    K_th.append(2.2)
-    sigma_fl.append(169.0)
-    K_IC.append(29.0)
-    sigma_y.append(503.0)
-    sigma_f.append(1610.0)
-    E.append(71000.0)
-    nu.append(0.33)
-    b.append(-0.1553)
-    G.append(E[MAT]/(2.0*(1.0 + nu[MAT])))
-    
-    #Material 1:
-#    C.append()
-#    n.append()
-#    f.append()
-#    l_0.append()
-#    K_th.append()
-#    sigma_fl.append()
-#    K_IC.append()
-#    sigma_y.append()
-#    sigma_f.append()
-#    E.append()
-#    nu.append()
-#    b.append()
-#    G.append(E[MAT]/((1.0 + nu[MAT])))
-        
-    #Calculo del parametro de El Haddad y salida de las constantes
-    a_0.append(1/np.pi*(K_th[MAT]/(sigma_fl[MAT]))**2.0)
-    
-    mat_props = [C[MAT], n[MAT], f[MAT], l_0[MAT], K_th[MAT], a_0[MAT],
-                 K_IC[MAT], sigma_y[MAT], sigma_f[MAT], E[MAT], nu[MAT],
-                 b[MAT], G[MAT]]
-    return mat_props
-    
 ###############################################################################
 ###############################################################################
 
@@ -160,7 +100,7 @@ def Phi(ac = 0.5):
 ###############################################################################
 ###############################################################################
 
-def fase_propagacion(sigma, ind_a, a_i, da, W, MAT = 0):
+def fase_propagacion(sigma, ind_a, a_i, ac,da, W, MAT):
     """Devuelve los ciclos de propagacion de la grieta.
     
     INPUTS: sigma    = (MPa) tensión maxima perpendicular al plano de la grieta
@@ -168,6 +108,7 @@ def fase_propagacion(sigma, ind_a, a_i, da, W, MAT = 0):
                        (list)  --> fase de propagación       
             ind_a   = indice asociado a la longitud de grieta
             a_i     = (m) longitud inicial de la grieta
+            ac      = plana o eliptica (0 o 0.5)
             da      = (m) paso de longitudes de grietas
             W       = (m) anchura del especimen
             MAT     = indice asignado al material
@@ -175,15 +116,16 @@ def fase_propagacion(sigma, ind_a, a_i, da, W, MAT = 0):
     OUTPUT: N_p     = ciclos de la fase de propagacion"""
     
     #Obtenemos las constantes del material
-    mat_props = constantes_material(MAT)
+    # mat_props = constantes_material(MAT)
     
-    C    = mat_props[0]
-    n    = mat_props[1]
-    f    = mat_props[2]
-    l_0  = mat_props[3]
-    K_th = mat_props[4]
-    a_0  = mat_props[5]
-    K_IC = mat_props[6]
+    C    = MAT["C"]
+    n    = MAT["n"]
+    f    = MAT["f"]
+    l_0  = MAT["l_0"]
+    K_th = MAT["K_th"]
+    a_0  = MAT["a_0"]
+    K_IC = MAT["K_IC"]
+    
 
     def integr_prop(x, s, ac):
         """Realiza el cálculo de la integral de los ciclos de propagación"""
@@ -199,7 +141,13 @@ def fase_propagacion(sigma, ind_a, a_i, da, W, MAT = 0):
         return ki, res            
     
     #Si sigma es de tipo float, el cálculo es para la fase de iniciación
-    ac  = 0.5
+    # ac  = 0.5
+
+    if ac == "plana":
+        ac = 0.0
+    elif ac == "eliptica":
+        ac =0.5
+    
     N_p = 0.0
     a   = a_i 
     ki  = 0.0

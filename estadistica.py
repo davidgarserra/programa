@@ -1,3 +1,10 @@
+# -*- coding: utf-8 -*-
+"""
+Created on :
+
+@author: David García Serrano
+"""
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt 
@@ -55,42 +62,22 @@ def regresion(par,vida_estimada, vida_experimental):
 
     a= Lm.coef_[0] #coeficiente de la regresion forzados en el origen
     r =Lm.score(x.reshape(-1,1),y.reshape(-1,1)) # Coeficiente de correlación
-    xs = np.array([0,15])
+    xs = np.array([0,15]) #Recta de 
     ys = a*xs
 
-    # plt.figure(figsize =(5,5))
+    fig =plt.figure(figsize =(5,5))
     plt.plot(x,y,"ok")
-    plt.xlim([np.min(x)*0.95,np.max(x)*1.05])
-    plt.ylim([np.min(x)*0.95,np.max(x)*1.05])
+    plt.xlim([np.min(x)*0.99,np.max(x)*1.01])
+    plt.ylim([np.min(x)*0.99,np.max(x)*1.01])
     plt.xlabel('Log(Vida estimada)')
     plt.ylabel('Log(Vida experimental)')
-    plt.annotate("$a= {:.3f}$\n$r^2= {:.3f}$".format(a[0],r),xy =(np.min(x),np.max(x)),xytext =(np.min(x),np.max(x)))
-    plt.plot([0,15],[0,15],'--r')
-    plt.plot(xs,ys,"-g")
+    plt.annotate("$a= {:.3f}$\n$r^2= {:.3f}$".format(a[0],r),xy =(np.min(x),np.max(x)),xytext =(np.min(x),np.max(x)*0.95))
+    plt.plot([0,15],[0,15],'--r',label ="Recta de equivalencia") #recta
+    plt.plot(xs,ys,"--g",label ="Recta de regresión")
+    plt.legend()
     plt.grid()
-    # plt.show()
-
-    #Figura con los datos sin aplicar logaritmo decimal
-
-    # x_sin =np.concatenate((Df_est_exp.vida_estimada.values,Df_est_exp.vida_estimada.values))
-    # y_sin =np.concatenate((Df_est_exp.vida_experimental1.values,Df_est_exp.vida_experimental2.values))
-
-    # plt.figure(figsize=(5,5))
-    # plt.plot(x_sin,y_sin,'ok')
-    # plt.xscale("log")
-    # plt.yscale("log")
-    # plt.plot([0, 1e10], [0, 1e10], '--r')
-    # plt.yscale('log')    
-    # plt.xscale('log')
-    # plt.ylim([np.min(x_sin)/2,np.max(x_sin)*2])
-    # plt.xlim([np.min(x_sin)/2,np.max(x_sin)*2])
-    # plt.xlabel('Vida estimada')
-    # plt.ylabel('Vida experimental')
-    # plt.grid(which = 'major', color = 'k', linestyle='-', linewidth=0.4)
-    # plt.grid(which = 'minor', color = 'gray', linestyle=':', linewidth=0.2)
-    # plt.show()
-    
-    
+    return fig
+   
 def grafica_lon_vida(par,vida_estimada):
     data_est =pd.read_table(vida_estimada,sep=r"\s+",skiprows =1, names =["exp_id", "param","N_t_min","N_i_min", "N_p_min","%N_i","%N_p","a_inic" ])
     data_est=data_est[data_est.exp_id !="6629_971_70"]
